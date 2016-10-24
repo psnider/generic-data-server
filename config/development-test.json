@@ -1,0 +1,11 @@
+{
+    "people": {
+        "api_port": 2999,
+        "api_url": "http://localhost:2999/api/people",
+        "db": {
+            "type": "MongoDBAdaptor",
+            "port": 27016,
+            "url": "localhost:27016/test"
+        }
+    }
+}

@@ -1,0 +1,9 @@
+{
+    "people": {
+        "service_name": "people",
+        "database_table_name": "people",
+        "typename": "Person",
+        "body_parser_limit": "5mb",
+        "api_url_path_prefix": "/api/people"
+    }
+}
