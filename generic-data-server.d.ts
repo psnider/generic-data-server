@@ -9,8 +9,8 @@ export class ApiServer<DataType extends DocumentBase> {
 }
 
 
-// The configuration accepted by a generic-data-server micro-service
-export interface MicroServiceConfig {
+// These settings will be in config/common.json
+export interface CommonSettings {
     // the name of the service, e.g. people
     service_name: string
     // the name of the database table used with this service, e.g. people
@@ -21,7 +21,13 @@ export interface MicroServiceConfig {
     body_parser_limit: string
     // The prefix of the path portion of the URL for the service, e.g. 'api/people'
     api_url_path_prefix: string
+}
 
+
+// These settings will be in config/${NODE_ENV}.json
+export interface NodeEnvironmentSettings {
+    // The hostname for this service, e.g. localhost
+    hostname: string
     // The port for the api service, e.g. 3000
     api_port: number
     // The name of the user that runs the deployed service, e.g. 'people'
@@ -43,5 +49,10 @@ export interface DatabaseConfig {
     // e.g. localhost:27017/test
     url: string
 }
+
+
+// The configuration accepted by a generic-data-server micro-service
+export type MicroServiceConfig = CommonSettings & NodeEnvironmentSettings
+
 
 
