@@ -62,11 +62,10 @@ export class SingleTypeDatabaseServer<DataType extends DocumentBase> {
 
 
     private selectDatabase(mongoose_data_definition?: Object) {
-        // TODO: change to take db from fixed path, set by a link
-        // test programs should set the configuration of people:db:*
+        // TODO: change to take db from fixed path, set by a link, or some other means
         switch (this.config.db.type) {
             case 'InMemoryDB':
-                this.db = new InMemoryDB('people', 'Person')
+                this.db = new InMemoryDB(this.config.database_table_name, this.config.typename)
                 break
             case 'MongoDBAdaptor':
                 this.initMongooseModel(mongoose_data_definition)

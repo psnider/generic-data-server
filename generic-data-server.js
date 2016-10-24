@@ -30,11 +30,10 @@ var SingleTypeDatabaseServer = (function () {
         app.post(this.config.api_url_path_prefix, jsonParser, function (req, res) { return _this.handleDataRequest(req, res); });
     };
     SingleTypeDatabaseServer.prototype.selectDatabase = function (mongoose_data_definition) {
-        // TODO: change to take db from fixed path, set by a link
-        // test programs should set the configuration of people:db:*
+        // TODO: change to take db from fixed path, set by a link, or some other means
         switch (this.config.db.type) {
             case 'InMemoryDB':
-                this.db = new in_memory_db_1.InMemoryDB('people', 'Person');
+                this.db = new in_memory_db_1.InMemoryDB(this.config.database_table_name, this.config.typename);
                 break;
             case 'MongoDBAdaptor':
                 this.initMongooseModel(mongoose_data_definition);
