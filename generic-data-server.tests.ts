@@ -2,6 +2,8 @@ import HTTP_STATUS = require('http-status-codes');
 import request = require('request')
 import CHAI = require('chai')
 const  expect = CHAI.expect
+import express = require('express')
+import pino = require('pino')
 var promisify = require("promisify-node");
 
 process.env.NODE_ENV = 'development-test'
@@ -9,12 +11,12 @@ import configure = require('configure-local')
 import {ArrayCallback, Conditions, Cursor, DocumentID, DocumentDatabase, ErrorOnlyCallback, Fields, ObjectCallback, ObjectOrArrayCallback, Request as DBRequest, Response as DBResponse, Sort, UpdateFieldCommand} from 'document-database-if'
 import {Person, Name, ContactMethod, newPerson, newContactMethod} from './example-data-type'
 import {UpdateConfiguration, test_create, test_read, test_replace, test_del, test_update, test_find} from 'document-database-tests'
-import {MicroServiceConfig, ApiServer} from 'generic-data-server'
+import {MicroServiceConfig, SingleTypeDatabaseServer} from 'generic-data-server'
 import {PERSON_SCHEMA_DEF} from './person.mongoose-schema'
 import {MongoDaemonRunner} from 'mongod-runner'
 
 
-
+var log = pino({name: 'generic-data-server.tests', enabled: !process.env.DISABLE_LOGGING})
 
 
 // test programs should set the configuration of people:api_url and people:db:type
@@ -195,7 +197,7 @@ var db: ApiAsDatabase = new ApiAsDatabase('people-service-db', 'Person')
 describe(`generic-data-server using ${DB_TYPE}`, function() {
 
     var mongo_daemon: MongoDaemonRunner
-    var server: ApiServer<Person>
+    var db_server: SingleTypeDatabaseServer<Person>
 
     function getDB() {return db}
 
@@ -208,8 +210,20 @@ describe(`generic-data-server using ${DB_TYPE}`, function() {
         mongo_daemon = new MongoDaemonRunner(mongo_daemon_options)
         mongo_daemon.start((error) => {
             if (!error) {
-                server = new ApiServer('people', PERSON_SCHEMA_DEF)
-                server.start(done)
+                db_server = new SingleTypeDatabaseServer<Person>({
+                    config,
+                    log,
+                    mongoose_data_definition: PERSON_SCHEMA_DEF})
+                var app = express()
+                db_server.configureExpress(app)
+                db_server.connect((error) => {
+                    if (!error) {
+                        const api_port = config.api_port
+                        log.info({config}, `listening on port=${api_port}`)
+                        app.listen(api_port)
+                    }
+                    done(error)
+                })
             } else {
                 console.error(`Failed to start mongo daemon: error=${error}`)
                 done(error)
@@ -219,7 +233,7 @@ describe(`generic-data-server using ${DB_TYPE}`, function() {
 
 
     after((done) => {
-        server.stop((error) => {
+        db_server.disconnect((error) => {
             if (!error) {
                 mongo_daemon.stop(done)
             } else {
@@ -227,6 +241,7 @@ describe(`generic-data-server using ${DB_TYPE}`, function() {
             }
         })
     })
+
 
     describe('create()', function() {
          test_create<Person>(getDB, newPerson, ['account_email', 'locale'])        

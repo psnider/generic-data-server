@@ -1,15 +1,12 @@
 "use strict";
 var body_parser = require('body-parser');
-var express = require('express');
 var HTTP_STATUS = require('http-status-codes');
 var mongoose = require('mongoose');
-var pino = require('pino');
-var configure = require('configure-local');
 var in_memory_db_1 = require('in-memory-db');
 var mongodb_adaptor_1 = require('mongodb-adaptor');
-var ApiServer = (function () {
+var SingleTypeDatabaseServer = (function () {
     // mongoose_schema is not required for an InMemoryDB database
-    function ApiServer(configuration_key, mongoose_data_definition) {
+    function SingleTypeDatabaseServer(options) {
         // IMPLEMENTATION NOTE: typescript doesn't allow the use of the keyword delete as a function name
         this.VALID_ACTIONS = {
             create: this.create,
@@ -20,23 +17,19 @@ var ApiServer = (function () {
             find: this.find
         };
         var fname = 'constructor';
-        this.configuration_key = configuration_key;
-        this.mongoose = { data_definition: mongoose_data_definition, schema: undefined, model: undefined };
-        this.config = configure.get(this.configuration_key);
-        this.log = pino({ name: this.config.service_name, enabled: !process.env.DISABLE_LOGGING });
-        this.app = express();
-        this.configureExpress();
+        this.config = options.config;
+        this.log = options.log;
         this.log.info({ fname: fname, config: this.config });
-        this.selectDatabase();
+        this.selectDatabase(options.mongoose_data_definition);
     }
-    ApiServer.prototype.configureExpress = function () {
+    SingleTypeDatabaseServer.prototype.configureExpress = function (app) {
         var _this = this;
         var limit = this.config.body_parser_limit;
         var jsonParser = body_parser.json({ limit: limit });
-        this.app.use(body_parser.json({ limit: limit }));
-        this.app.post(this.config.api_url_path_prefix, jsonParser, function (req, res) { return _this.handlePeople(req, res); });
+        //app.use(body_parser.json({limit}))
+        app.post(this.config.api_url_path_prefix, jsonParser, function (req, res) { return _this.handleDataRequest(req, res); });
     };
-    ApiServer.prototype.selectDatabase = function () {
+    SingleTypeDatabaseServer.prototype.selectDatabase = function (mongoose_data_definition) {
         // TODO: change to take db from fixed path, set by a link
         // test programs should set the configuration of people:db:*
         switch (this.config.db.type) {
@@ -44,13 +37,18 @@ var ApiServer = (function () {
                 this.db = new in_memory_db_1.InMemoryDB('people', 'Person');
                 break;
             case 'MongoDBAdaptor':
-                this.initMongooseModel();
+                this.initMongooseModel(mongoose_data_definition);
                 break;
             default:
-                throw new Error(this.configuration_key + ":db:type must be configured to be either: InMemoryDB or MongoDBAdaptor");
+                throw new Error("config.db.type must be configured to be either: InMemoryDB or MongoDBAdaptor");
         }
     };
-    ApiServer.prototype.initMongooseModel = function () {
+    SingleTypeDatabaseServer.prototype.initMongooseModel = function (mongoose_data_definition) {
+        this.mongoose = {
+            data_definition: mongoose_data_definition,
+            schema: undefined,
+            model: undefined
+        };
         this.mongoose.schema = new mongoose.Schema(this.mongoose.data_definition);
         this.mongoose.model = mongoose.model(this.config.database_table_name, this.mongoose.schema);
         // TODO: support adding index specifications
@@ -63,62 +61,51 @@ var ApiServer = (function () {
         // });
         this.db = new mongodb_adaptor_1.MongoDBAdaptor(this.config.db.url, this.mongoose.model);
     };
-    ApiServer.prototype.start = function (done) {
+    SingleTypeDatabaseServer.prototype.connect = function (done) {
         var _this = this;
-        var fname = 'start';
+        var fname = 'connect';
         this.log.info({ fname: fname, db_state: 'connecting' });
         this.db.connect(function (error) {
             if (!error) {
                 _this.log.info({ fname: fname, db_state: 'connected' });
-                var api_port = _this.config.api_port;
-                _this.server = _this.app.listen(api_port);
-                _this.log.info({ fname: fname, service_state: 'listening', port: api_port });
-                done();
             }
-            else {
-                done(error);
-            }
+            done(error);
         });
     };
-    ApiServer.prototype.stop = function (done) {
+    SingleTypeDatabaseServer.prototype.disconnect = function (done) {
         var _this = this;
-        var fname = 'stop';
+        var fname = 'disconnect';
         this.log.info({ fname: fname, db_state: 'disconnecting' });
         this.db.disconnect(function (error) {
             if (!error) {
                 _this.log.info({ fname: fname, db_state: 'disconnected' });
-                _this.server.close();
-                _this.log.info({ fname: fname, service_state: 'closed' });
-                done();
             }
-            else {
-                done(error);
-            }
+            done(error);
         });
     };
-    ApiServer.prototype.create = function (msg, done) {
+    SingleTypeDatabaseServer.prototype.create = function (msg, done) {
         this.db.create(msg.obj, done);
     };
-    ApiServer.prototype.read = function (msg, done) {
+    SingleTypeDatabaseServer.prototype.read = function (msg, done) {
         var _id = msg.query && msg.query.ids && msg.query.ids[0];
         this.db.read(_id, done);
     };
-    ApiServer.prototype.replace = function (msg, done) {
+    SingleTypeDatabaseServer.prototype.replace = function (msg, done) {
         this.db.replace(msg.obj, done);
     };
-    ApiServer.prototype.update = function (msg, done) {
+    SingleTypeDatabaseServer.prototype.update = function (msg, done) {
         this.db.update(msg.query && msg.query.conditions, msg.updates, done);
     };
-    ApiServer.prototype.del = function (msg, done) {
+    SingleTypeDatabaseServer.prototype.del = function (msg, done) {
         var _id = msg.query && (msg.query.ids && msg.query.ids[0]);
         this.db.del(_id, done);
     };
-    ApiServer.prototype.find = function (msg, done) {
+    SingleTypeDatabaseServer.prototype.find = function (msg, done) {
         this.db.find(msg.query && msg.query.conditions, msg.query && msg.query.fields, msg.query && msg.query.sort, msg.query && msg.query.cursor, done);
     };
-    ApiServer.prototype.handlePeople = function (req, res) {
+    SingleTypeDatabaseServer.prototype.handleDataRequest = function (req, res) {
         var _this = this;
-        var fname = 'handlePeople';
+        var fname = 'handleDataRequest';
         var msg = req.body;
         if (msg) {
             // restrict the space of user input actions to those that are public
@@ -165,10 +152,10 @@ var ApiServer = (function () {
         }
     };
     // TODO: figure out clean way to get these
-    ApiServer.VERSION = {
+    SingleTypeDatabaseServer.VERSION = {
         semver: undefined,
         sha: undefined
     };
-    return ApiServer;
+    return SingleTypeDatabaseServer;
 }());
-exports.ApiServer = ApiServer;
+exports.SingleTypeDatabaseServer = SingleTypeDatabaseServer;

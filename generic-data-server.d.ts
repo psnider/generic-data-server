@@ -1,11 +1,20 @@
+import express = require('express-serve-static-core')
+import pino = require('pino')
 import {DocumentBase} from 'document-database-if'
 
 
+export interface SingleTypeDatabaseServerOptions {
+    config: MicroServiceConfig
+    log: any // TODO: must be pino(), but can't find type
+    mongoose_data_definition?: Object
+}
 
-export class ApiServer<DataType extends DocumentBase> {
-    constructor(configuration_key: string, mongoose_data_definition?: Object)
-    start(done: (error?: Error) => void)
-    stop(done: (error?: Error) => void)
+
+export class SingleTypeDatabaseServer<DataType extends DocumentBase> {
+    constructor(options: SingleTypeDatabaseServerOptions)
+    configureExpress(app: express.Express)
+    connect(done: (error?: Error) => void)
+    disconnect(done: (error?: Error) => void)
 }
 
 

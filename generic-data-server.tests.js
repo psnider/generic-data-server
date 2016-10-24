@@ -3,6 +3,8 @@ var HTTP_STATUS = require('http-status-codes');
 var request = require('request');
 var CHAI = require('chai');
 var expect = CHAI.expect;
+var express = require('express');
+var pino = require('pino');
 var promisify = require("promisify-node");
 process.env.NODE_ENV = 'development-test';
 var configure = require('configure-local');
@@ -11,6 +13,7 @@ var document_database_tests_1 = require('document-database-tests');
 var generic_data_server_1 = require('generic-data-server');
 var person_mongoose_schema_1 = require('./person.mongoose-schema');
 var mongod_runner_1 = require('mongod-runner');
+var log = pino({ name: 'generic-data-server.tests', enabled: !process.env.DISABLE_LOGGING });
 // test programs should set the configuration of people:api_url and people:db:type
 var config = configure.get('people');
 var URL = config.api_url;
@@ -168,7 +171,7 @@ var db = new ApiAsDatabase('people-service-db', 'Person');
 // except for checking http status codes
 describe("generic-data-server using " + DB_TYPE, function () {
     var mongo_daemon;
-    var server;
+    var db_server;
     function getDB() { return db; }
     before(function (done) {
         var mongo_daemon_options = {
@@ -179,8 +182,20 @@ describe("generic-data-server using " + DB_TYPE, function () {
         mongo_daemon = new mongod_runner_1.MongoDaemonRunner(mongo_daemon_options);
         mongo_daemon.start(function (error) {
             if (!error) {
-                server = new generic_data_server_1.ApiServer('people', person_mongoose_schema_1.PERSON_SCHEMA_DEF);
-                server.start(done);
+                db_server = new generic_data_server_1.SingleTypeDatabaseServer({
+                    config: config,
+                    log: log,
+                    mongoose_data_definition: person_mongoose_schema_1.PERSON_SCHEMA_DEF });
+                var app = express();
+                db_server.configureExpress(app);
+                db_server.connect(function (error) {
+                    if (!error) {
+                        var api_port = config.api_port;
+                        log.info({ config: config }, "listening on port=" + api_port);
+                        app.listen(api_port);
+                    }
+                    done(error);
+                });
             }
             else {
                 console.error("Failed to start mongo daemon: error=" + error);
@@ -189,7 +204,7 @@ describe("generic-data-server using " + DB_TYPE, function () {
         });
     });
     after(function (done) {
-        server.stop(function (error) {
+        db_server.disconnect(function (error) {
             if (!error) {
                 mongo_daemon.stop(done);
             }

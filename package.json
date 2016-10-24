@@ -8,7 +8,7 @@
     "postinstall": "typings install && npm run remove-typings-from-express-core",
     "remove-typings-from-express-core": "[[ ! -e node_modules/express-serve-static-core/package.json ]] || sed -i -- 's/\"typings\":/\"#typings\":/' node_modules/express-serve-static-core/package.json",
     "install-in-node_modules": "bin/install-in-node_modules.sh",
-    "build": "npm run install-in-node_modules && tsc --project .",
+    "build": "npm run install-in-node_modules && tsc --project . && npm run install-in-node_modules",
     "clean": "rm -fr generated logs && npm run mkdirs",
     "test-only": "DISABLE_LOGGING=true mocha -R spec generic-data-server.tests.js",
     "test": "npm run build && npm run test-only"

@@ -1,5 +1,4 @@
 import body_parser = require('body-parser');
-import express = require('express')
 import {Express} from 'express-serve-static-core'
 import HTTP_STATUS = require('http-status-codes');
 import mongoose = require('mongoose')
@@ -7,13 +6,13 @@ import pino = require('pino')
 
 import configure = require('configure-local')
 import {DocumentDatabase, DocumentID, DocumentBase, Request, Response} from 'document-database-if'
-import {MicroServiceConfig} from 'generic-data-server'
+import {SingleTypeDatabaseServerOptions, MicroServiceConfig} from 'generic-data-server'
 import {InMemoryDB} from 'in-memory-db'
 import {MongoDBAdaptor} from 'mongodb-adaptor'
 
 
 
-export class ApiServer<DataType extends DocumentBase> {
+export class SingleTypeDatabaseServer<DataType extends DocumentBase> {
 
     // TODO: figure out clean way to get these
     static VERSION = {
@@ -32,11 +31,8 @@ export class ApiServer<DataType extends DocumentBase> {
     }
 
 
-    private configuration_key: string
     private config: MicroServiceConfig
     private log
-    private app: Express
-    private server
     private db: DocumentDatabase<DataType>
     private mongoose: {
         data_definition: Object
@@ -46,30 +42,26 @@ export class ApiServer<DataType extends DocumentBase> {
 
 
     // mongoose_schema is not required for an InMemoryDB database
-    constructor(configuration_key: string, mongoose_data_definition?: Object) {
+    constructor(options: SingleTypeDatabaseServerOptions) {
         let fname = 'constructor'
-        this.configuration_key = configuration_key
-        this.mongoose = {data_definition: mongoose_data_definition, schema: undefined, model: undefined}
-        this.config = <MicroServiceConfig>configure.get(this.configuration_key)
-        this.log = pino({name: this.config.service_name, enabled: !process.env.DISABLE_LOGGING})
-        this.app = express()
-        this.configureExpress()
+        this.config = options.config
+        this.log = options.log
         this.log.info({fname, config: this.config})
-        this.selectDatabase()
+        this.selectDatabase(options.mongoose_data_definition)
     }
 
 
-    private configureExpress() {
+    configureExpress(app: Express) {
         const limit = this.config.body_parser_limit
         let jsonParser = body_parser.json({limit})
-        this.app.use(body_parser.json({limit}))
-        this.app.post(this.config.api_url_path_prefix, jsonParser, (req, res) => this.handlePeople(req, res))    
+       //app.use(body_parser.json({limit}))
+        app.post(this.config.api_url_path_prefix, jsonParser, (req, res) => this.handleDataRequest(req, res))    
     }
 
 
 
 
-    private selectDatabase() {
+    private selectDatabase(mongoose_data_definition?: Object) {
         // TODO: change to take db from fixed path, set by a link
         // test programs should set the configuration of people:db:*
         switch (this.config.db.type) {
@@ -77,17 +69,22 @@ export class ApiServer<DataType extends DocumentBase> {
                 this.db = new InMemoryDB('people', 'Person')
                 break
             case 'MongoDBAdaptor':
-                this.initMongooseModel()
+                this.initMongooseModel(mongoose_data_definition)
                 break
             default:
-                throw new Error(`${this.configuration_key}:db:type must be configured to be either: InMemoryDB or MongoDBAdaptor`)
+                throw new Error(`config.db.type must be configured to be either: InMemoryDB or MongoDBAdaptor`)
         }
     }
 
 
-    private initMongooseModel() {
-        this.mongoose.schema = new mongoose.Schema(this.mongoose.data_definition);
-        this.mongoose.model = mongoose.model(this.config.database_table_name, this.mongoose.schema);
+    private initMongooseModel(mongoose_data_definition?: Object) {
+        this.mongoose = {
+            data_definition: mongoose_data_definition,
+            schema: undefined,
+            model: undefined
+        }
+        this.mongoose.schema = new mongoose.Schema(this.mongoose.data_definition)
+        this.mongoose.model = mongoose.model(this.config.database_table_name, this.mongoose.schema)
         // TODO: support adding index specifications
         // this.mongoose.schema.index({ account_email: 1}, { unique: true });
         // this.mongoose.schema.set('autoIndex', false);
@@ -100,35 +97,26 @@ export class ApiServer<DataType extends DocumentBase> {
     }
 
 
-    start(done: (error?: Error) => void) {
-        let fname = 'start'
+    connect(done: (error?: Error) => void) {
+        let fname = 'connect'
         this.log.info({fname, db_state: 'connecting'})
         this.db.connect((error) => {
             if (!error) {
                 this.log.info({fname, db_state: 'connected'})
-                const api_port = this.config.api_port
-                this.server = this.app.listen(api_port)
-                this.log.info({fname, service_state: 'listening', port: api_port})
-                done()
-            } else {
-                done(error)
             }
+            done(error)
         })
     }
 
 
-    stop(done: (error?: Error) => void) {
-        let fname = 'stop'
+    disconnect(done: (error?: Error) => void) {
+        let fname = 'disconnect'
         this.log.info({fname, db_state: 'disconnecting'})
         this.db.disconnect((error) => {
             if (!error) {
                 this.log.info({fname, db_state: 'disconnected'})
-                this.server.close()
-                this.log.info({fname, service_state: 'closed'})
-                done()
-            } else {
-                done(error)
             }
+            done(error)
         })
     }
 
@@ -166,8 +154,8 @@ export class ApiServer<DataType extends DocumentBase> {
     }
 
 
-    private handlePeople(req, res) {
-        const fname = 'handlePeople'
+    private handleDataRequest(req, res) {
+        const fname = 'handleDataRequest'
         const msg:Request<DataType> = req.body
         if (msg) {
             // restrict the space of user input actions to those that are public
