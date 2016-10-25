@@ -2,6 +2,7 @@
 var body_parser = require('body-parser');
 var HTTP_STATUS = require('http-status-codes');
 var mongoose = require('mongoose');
+mongoose.Promise = global.Promise;
 var in_memory_db_1 = require('in-memory-db');
 var mongodb_adaptor_1 = require('mongodb-adaptor');
 var SingleTypeDatabaseServer = (function () {

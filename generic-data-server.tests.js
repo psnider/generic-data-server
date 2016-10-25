@@ -13,7 +13,8 @@ var document_database_tests_1 = require('document-database-tests');
 var generic_data_server_1 = require('generic-data-server');
 var person_mongoose_schema_1 = require('./person.mongoose-schema');
 var mongod_runner_1 = require('mongod-runner');
-var log = pino({ name: 'generic-data-server.tests', enabled: !process.env.DISABLE_LOGGING });
+var enable_logging = (process.env.DISABLE_LOGGING == null) || ((process.env.DISABLE_LOGGING.toLowerCase() !== 'true') && (process.env.DISABLE_LOGGING !== '1'));
+var log = pino({ name: 'generic-data-server.tests', enabled: enable_logging });
 // test programs should set the configuration of people:api_url and people:db:type
 var config = configure.get('people');
 var URL = config.api_url;

@@ -2,6 +2,7 @@ import body_parser = require('body-parser');
 import {Express} from 'express-serve-static-core'
 import HTTP_STATUS = require('http-status-codes');
 import mongoose = require('mongoose')
+mongoose.Promise = global.Promise;
 import pino = require('pino')
 
 import configure = require('configure-local')

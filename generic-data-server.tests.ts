@@ -16,7 +16,8 @@ import {PERSON_SCHEMA_DEF} from './person.mongoose-schema'
 import {MongoDaemonRunner} from 'mongod-runner'
 
 
-var log = pino({name: 'generic-data-server.tests', enabled: !process.env.DISABLE_LOGGING})
+var enable_logging: boolean = (process.env.DISABLE_LOGGING == null) || ((process.env.DISABLE_LOGGING.toLowerCase() !== 'true') && (process.env.DISABLE_LOGGING !== '1'))
+var log = pino({name: 'generic-data-server.tests', enabled: enable_logging})
 
 
 // test programs should set the configuration of people:api_url and people:db:type
