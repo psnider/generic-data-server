@@ -22,16 +22,7 @@ export class SingleTypeDatabaseServer<DataType extends DocumentBase> {
     }
 
     // IMPLEMENTATION NOTE: typescript doesn't allow the use of the keyword delete as a function name
-    VALID_ACTIONS = {
-        create: this.create, 
-        read: this.read,
-        replace: this.replace,
-        update: this.update,
-        delete: this.del,
-        find: this.find
-    }
-
-
+    private VALID_ACTIONS: {[action: string]: (msg: Request<DataType>, done: (error?: Error) => void) => void}
     private config: MicroServiceConfig
     private log
     private db: DocumentDatabase<DataType>
@@ -45,6 +36,14 @@ export class SingleTypeDatabaseServer<DataType extends DocumentBase> {
     // mongoose_schema is not required for an InMemoryDB database
     constructor(options: SingleTypeDatabaseServerOptions) {
         let fname = 'constructor'
+        this.VALID_ACTIONS = {
+            create: this.create, 
+            read: this.read,
+            replace: this.replace,
+            update: this.update,
+            delete: this.del,
+            find: this.find
+        }
         this.config = options.config
         this.log = options.log
         this.log.info({fname, config: this.config})
@@ -55,8 +54,11 @@ export class SingleTypeDatabaseServer<DataType extends DocumentBase> {
     configureExpress(app: Express) {
         const limit = this.config.body_parser_limit
         let jsonParser = body_parser.json({limit})
-       //app.use(body_parser.json({limit}))
-        app.post(this.config.api_url_path_prefix, jsonParser, (req, res) => this.handleDataRequest(req, res))    
+        //app.use(body_parser.json({limit}))
+        this.log.info({fname: 'SingleTypeDatabaseServer.configureExpress', post: {api_url_path_prefix: this.config.api_url_path_prefix}})
+        app.post(this.config.api_url_path_prefix, jsonParser, (req, res) => {
+            this.handleDataRequest(req, res)
+        })    
     }
 
 

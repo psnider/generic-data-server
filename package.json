@@ -7,11 +7,12 @@
   "private": false,
   "scripts": {
     "postinstall": "typings install && npm run remove-typings-from-express-core",
+    "check-no-mongod-27016": "! lsof -i :27016",
     "remove-typings-from-express-core": "[[ ! -e node_modules/express-serve-static-core/package.json ]] || sed -i -- 's/\"typings\":/\"#typings\":/' node_modules/express-serve-static-core/package.json",
     "install-in-node_modules": "bin/install-in-node_modules.sh",
     "build": "npm run install-in-node_modules && tsc --project . && npm run install-in-node_modules",
-    "clean": "rm -fr generated logs && npm run mkdirs",
-    "test-only": "DISABLE_LOGGING=true mocha -R spec generic-data-server.tests.js",
+    "clean": "rm -f *.js *.js.map",
+    "test-only": "npm run check-no-mongod-27016 && NODE_ENV=development-test DISABLE_LOGGING=true mocha -R spec generic-data-server.tests.js",
     "test": "npm run build && npm run test-only"
   },
   "author": {
