@@ -2,6 +2,7 @@
   "name": "generic-data-server",
   "version": "0.1.0",
   "description": "The portion of a micro-service that manages a database of a single document type.",
+  "main": "generic-data-server.js",
   "keywords": [],
   "private": false,
   "scripts": {
