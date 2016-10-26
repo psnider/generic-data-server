@@ -6,9 +6,9 @@
   "keywords": [],
   "private": false,
   "scripts": {
-    "postinstall": "typings install && npm run remove-typings-from-express-core",
+    "postinstall": "typings install && npm run remove-node-ref-from-express-core-typings",
     "check-no-mongod-27016": "! lsof -i :27016",
-    "remove-typings-from-express-core": "[[ ! -e node_modules/express-serve-static-core/package.json ]] || sed -i -- 's/\"typings\":/\"#typings\":/' node_modules/express-serve-static-core/package.json",
+    "remove-node-ref-from-express-core-typings": "[[ ! -e node_modules/express-serve-static-core/express-serve-static-core.d.ts ]] || sed -i -- 's|/// <reference types=\"node\" />|// / <reference types=\"node\" />|' node_modules/express-serve-static-core/express-serve-static-core.d.ts",
     "install-in-node_modules": "bin/install-in-node_modules.sh",
     "build": "npm run install-in-node_modules && tsc --project . && npm run install-in-node_modules",
     "clean": "rm -f *.js *.js.map",
@@ -24,19 +24,19 @@
     "body-parser": "^1.15.2",
     "configure-local": "github:psnider/configure-local",
     "document-database-if": "github:psnider/document-database-if",
-    "document-database-tests": "github:psnider/document-database-tests",
     "es6-shim": "^0.35.1",
     "express": "^4.14.0",
     "express-serve-static-core": "^0.1.1",
     "http-status-codes": "^1.0.6",
     "in-memory-db": "github:psnider/in-memory-db",
     "mongodb-adaptor": "github:psnider/mongodb-adaptor",
-    "mongoose": "^4.6.4",
-    "pino": "^2.12.4",
+    "mongoose": "^4.6.5",
+    "pino": "^2.13.2",
     "promisify-node": "^0.4.0",
-    "request": "^2.75.0"
+    "request": "^2.76.0"
   },
   "devDependencies": {
+    "document-database-tests": "github:psnider/document-database-tests",
     "mongod-runner": "github:psnider/mongod-runner"
   },
   "repository": {
