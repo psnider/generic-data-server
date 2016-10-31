@@ -1,20 +1,33 @@
 import express = require('express-serve-static-core')
 import pino = require('pino')
-import {DocumentBase} from 'document-database-if'
+import {DocumentBase, ErrorOnlyCallback} from 'document-database-if'
+
+
+// these seem to be missing from mongoose 
+// TODO: add to mongoose.d.ts
+type MongooseObjectId = any
+type MongooseDataFunction = (...any) => any
+type MongooseDataDefinitionFunction = MongooseObjectId | MongooseDataFunction
+type MongooseDataDefinitionType = MongooseDataDefinitionFunction | MongooseDataDefinitionFunction[] | MongooseDataDefinition | MongooseDataDefinition[]
+type MongooseDataDefinition = {[fieldname:string]: MongooseDataDefinitionType}
+
+
 
 
 export interface SingleTypeDatabaseServerOptions {
     config: MicroServiceConfig
     log: any // TODO: must be pino(), but can't find type
-    mongoose_data_definition?: Object
+    mongoose_data_definition?: MongooseDataDefinition
 }
 
 
 export class SingleTypeDatabaseServer<DataType extends DocumentBase> {
     constructor(options: SingleTypeDatabaseServerOptions)
-    configureExpress(app: express.Express)
-    connect(done: (error?: Error) => void)
+    configureExpress(app: express.Express): void
+    connect(done: ErrorOnlyCallback): void
+    connect() : Promise<void>
     disconnect(done: (error?: Error) => void)
+    disconnect() : Promise<void>
 }
 
 

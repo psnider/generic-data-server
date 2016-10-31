@@ -12,6 +12,13 @@ import {InMemoryDB} from 'in-memory-db'
 import {MongoDBAdaptor} from 'mongodb-adaptor'
 
 
+// TODO: FIX: Can't get this type to work in TS 2.0.3
+// See: http://stackoverflow.com/questions/40138730
+// type PromiseOrVoid<T> = Promise<T> | void
+type PromiseOrVoid = any
+
+
+
 
 export class SingleTypeDatabaseServer<DataType extends DocumentBase> {
 
@@ -99,64 +106,50 @@ export class SingleTypeDatabaseServer<DataType extends DocumentBase> {
     }
 
 
-    connect(done: (error?: Error) => void) {
-        let fname = 'connect'
-        this.log.info({fname, db_state: 'connecting'})
-        this.db.connect((error) => {
-            if (!error) {
-                this.log.info({fname, db_state: 'connected'})
-            }
-            done(error)
-        })
+    connect(done?: (error?: Error) => void): PromiseOrVoid {
+        return this.db.connect(done)
     }
 
 
-    disconnect(done: (error?: Error) => void) {
-        let fname = 'disconnect'
-        this.log.info({fname, db_state: 'disconnecting'})
-        this.db.disconnect((error) => {
-            if (!error) {
-                this.log.info({fname, db_state: 'disconnected'})
-            }
-            done(error)
-        })
+    disconnect(done?: (error?: Error) => void): PromiseOrVoid {
+        return this.db.disconnect(done)
     }
 
 
 
-    private create(msg: Request<DataType>, done) {
-        this.db.create(msg.obj, done)
+    private create(msg: Request<DataType>, done?): PromiseOrVoid {
+        return this.db.create(msg.obj, done)
     }
 
 
-    private read(msg:Request<DataType>, done) {
+    private read(msg:Request<DataType>, done?): PromiseOrVoid {
         let _id = msg.query && msg.query.ids && msg.query.ids[0]
-        this.db.read(_id, done)
+        return this.db.read(_id, done)
     }
 
 
-    private replace(msg:Request<DataType>, done) {
-        this.db.replace(msg.obj, done)
+    private replace(msg:Request<DataType>, done?): PromiseOrVoid {
+        return this.db.replace(msg.obj, done)
     }
 
 
-    private update(msg:Request<DataType>, done) {
-        this.db.update(msg.query && msg.query.conditions, msg.updates, done)
+    private update(msg:Request<DataType>, done?): PromiseOrVoid {
+        return this.db.update(msg.query && msg.query.conditions, msg.updates, done)
     }
 
 
-    private del(msg:Request<DataType>, done) {
+    private del(msg:Request<DataType>, done?): PromiseOrVoid {
         let _id = msg.query && (msg.query.ids && msg.query.ids[0])
-        this.db.del(_id, done)
+        return this.db.del(_id, done)
     }
 
 
-    private find(msg:Request<DataType>, done) {
-        this.db.find(msg.query && msg.query.conditions, msg.query && msg.query.fields, msg.query && msg.query.sort, msg.query && msg.query.cursor, done)
+    private find(msg:Request<DataType>, done): PromiseOrVoid {
+        return this.db.find(msg.query && msg.query.conditions, msg.query && msg.query.fields, msg.query && msg.query.sort, msg.query && msg.query.cursor, done)
     }
 
 
-    private handleDataRequest(req, res) {
+    private handleDataRequest(req, res): void {
         const fname = 'handleDataRequest'
         const msg:Request<DataType> = req.body
         if (msg) {

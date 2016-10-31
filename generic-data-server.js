@@ -64,46 +64,30 @@ var SingleTypeDatabaseServer = (function () {
         this.db = new mongodb_adaptor_1.MongoDBAdaptor(this.config.db.url, this.mongoose.model);
     };
     SingleTypeDatabaseServer.prototype.connect = function (done) {
-        var _this = this;
-        var fname = 'connect';
-        this.log.info({ fname: fname, db_state: 'connecting' });
-        this.db.connect(function (error) {
-            if (!error) {
-                _this.log.info({ fname: fname, db_state: 'connected' });
-            }
-            done(error);
-        });
+        return this.db.connect(done);
     };
     SingleTypeDatabaseServer.prototype.disconnect = function (done) {
-        var _this = this;
-        var fname = 'disconnect';
-        this.log.info({ fname: fname, db_state: 'disconnecting' });
-        this.db.disconnect(function (error) {
-            if (!error) {
-                _this.log.info({ fname: fname, db_state: 'disconnected' });
-            }
-            done(error);
-        });
+        return this.db.disconnect(done);
     };
     SingleTypeDatabaseServer.prototype.create = function (msg, done) {
-        this.db.create(msg.obj, done);
+        return this.db.create(msg.obj, done);
     };
     SingleTypeDatabaseServer.prototype.read = function (msg, done) {
         var _id = msg.query && msg.query.ids && msg.query.ids[0];
-        this.db.read(_id, done);
+        return this.db.read(_id, done);
     };
     SingleTypeDatabaseServer.prototype.replace = function (msg, done) {
-        this.db.replace(msg.obj, done);
+        return this.db.replace(msg.obj, done);
     };
     SingleTypeDatabaseServer.prototype.update = function (msg, done) {
-        this.db.update(msg.query && msg.query.conditions, msg.updates, done);
+        return this.db.update(msg.query && msg.query.conditions, msg.updates, done);
     };
     SingleTypeDatabaseServer.prototype.del = function (msg, done) {
         var _id = msg.query && (msg.query.ids && msg.query.ids[0]);
-        this.db.del(_id, done);
+        return this.db.del(_id, done);
     };
     SingleTypeDatabaseServer.prototype.find = function (msg, done) {
-        this.db.find(msg.query && msg.query.conditions, msg.query && msg.query.fields, msg.query && msg.query.sort, msg.query && msg.query.cursor, done);
+        return this.db.find(msg.query && msg.query.conditions, msg.query && msg.query.fields, msg.query && msg.query.sort, msg.query && msg.query.cursor, done);
     };
     SingleTypeDatabaseServer.prototype.handleDataRequest = function (req, res) {
         var _this = this;

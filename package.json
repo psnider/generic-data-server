@@ -8,11 +8,12 @@
   "scripts": {
     "postinstall": "typings install && npm run remove-node-ref-from-express-core-typings",
     "check-no-mongod-27016": "! lsof -i :27016",
+    "check-no-server-2999": "! lsof -i :2999",
     "remove-node-ref-from-express-core-typings": "[[ ! -e node_modules/express-serve-static-core/express-serve-static-core.d.ts ]] || sed -i -- 's|/// <reference types=\"node\" />|// / <reference types=\"node\" />|' node_modules/express-serve-static-core/express-serve-static-core.d.ts",
     "install-in-node_modules": "bin/install-in-node_modules.sh",
     "build": "npm run install-in-node_modules && tsc --project . && npm run install-in-node_modules",
     "clean": "rm -f *.js *.js.map",
-    "test-only": "npm run check-no-mongod-27016 && NODE_ENV=development-test DISABLE_LOGGING=true mocha -R spec generic-data-server.tests.js",
+    "test-only": "npm run check-no-mongod-27016 && npm run check-no-server-2999 && NODE_ENV=development-test DISABLE_LOGGING=true mocha -R spec generic-data-server.tests.js",
     "test": "npm run build && npm run test-only"
   },
   "author": {
