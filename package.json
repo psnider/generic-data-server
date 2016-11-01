@@ -22,23 +22,25 @@
   },
   "license": "MIT",
   "dependencies": {
-    "body-parser": "^1.15.2",
+    "body-parser": "1.15.2",
     "configure-local": "github:psnider/configure-local",
     "document-database-if": "github:psnider/document-database-if",
-    "es6-shim": "^0.35.1",
-    "express": "^4.14.0",
-    "express-serve-static-core": "^0.1.1",
-    "http-status-codes": "^1.0.6",
+    "es6-shim": "0.35.1",
+    "express": "4.14.0",
+    "express-serve-static-core": "0.1.1",
+    "http-status-codes": "1.0.6",
     "in-memory-db": "github:psnider/in-memory-db",
     "mongodb-adaptor": "github:psnider/mongodb-adaptor",
-    "mongoose": "^4.6.5",
-    "pino": "^2.13.2",
-    "promisify-node": "^0.4.0",
-    "request": "^2.76.0"
+    "mongoose": "4.6.5",
+    "pino": "2.14.0",
+    "promisify-node": "0.4.0",
+    "request": "2.76.0"
   },
   "devDependencies": {
-    "document-database-tests": "github:psnider/document-database-tests",
-    "mongod-runner": "github:psnider/mongod-runner"
+    "chai": "3.5.0",
+    "mocha": "3.1.2",
+    "typescript": "2.0.6",
+    "typings": "1.5.0"
   },
   "repository": {
     "type": "git",
