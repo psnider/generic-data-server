@@ -6,7 +6,7 @@ mongoose.Promise = global.Promise;
 import pino = require('pino')
 
 import configure = require('configure-local')
-import {DocumentDatabase, DocumentID, DocumentBase, Request, Response} from 'document-database-if'
+import {DocumentDatabase, DocumentID, DocumentBase, Request as DBRequest, Response as DBResponse} from 'document-database-if'
 import {SingleTypeDatabaseServerOptions, MicroServiceConfig} from 'generic-data-server'
 import {InMemoryDB} from 'in-memory-db'
 import {MongoDBAdaptor} from 'mongodb-adaptor'
@@ -29,10 +29,10 @@ export class SingleTypeDatabaseServer<DataType extends DocumentBase> {
     }
 
     // IMPLEMENTATION NOTE: typescript doesn't allow the use of the keyword delete as a function name
-    private VALID_ACTIONS: {[action: string]: (msg: Request<DataType>, done: (error?: Error) => void) => void}
+    private VALID_ACTIONS: {[action: string]: (msg: DBRequest, done: (error?: Error) => void) => void}
     private config: MicroServiceConfig
     private log
-    private db: DocumentDatabase<DataType>
+    private db: DocumentDatabase
     private mongoose: {
         data_definition: Object
         schema: mongoose.Schema
@@ -102,7 +102,7 @@ export class SingleTypeDatabaseServer<DataType extends DocumentBase> {
         //         throw error;
         //     }
         // });
-        this.db = new MongoDBAdaptor<DataType>(this.config.db.url, this.mongoose.model)
+        this.db = new MongoDBAdaptor(this.config.db.url, this.mongoose.model)
     }
 
 
@@ -117,47 +117,47 @@ export class SingleTypeDatabaseServer<DataType extends DocumentBase> {
 
 
 
-    private create(msg: Request<DataType>, done?): PromiseOrVoid {
+    private create(msg: DBRequest, done?): PromiseOrVoid {
         return this.db.create(msg.obj, done)
     }
 
 
-    private read(msg:Request<DataType>, done?): PromiseOrVoid {
+    private read(msg:DBRequest, done?): PromiseOrVoid {
         let _id = msg.query && msg.query.ids && msg.query.ids[0]
         return this.db.read(_id, done)
     }
 
 
-    private replace(msg:Request<DataType>, done?): PromiseOrVoid {
+    private replace(msg:DBRequest, done?): PromiseOrVoid {
         return this.db.replace(msg.obj, done)
     }
 
 
-    private update(msg:Request<DataType>, done?): PromiseOrVoid {
+    private update(msg:DBRequest, done?): PromiseOrVoid {
         return this.db.update(msg.query && msg.query.conditions, msg.updates, done)
     }
 
 
-    private del(msg:Request<DataType>, done?): PromiseOrVoid {
+    private del(msg:DBRequest, done?): PromiseOrVoid {
         let _id = msg.query && (msg.query.ids && msg.query.ids[0])
         return this.db.del(_id, done)
     }
 
 
-    private find(msg:Request<DataType>, done): PromiseOrVoid {
+    private find(msg:DBRequest, done): PromiseOrVoid {
         return this.db.find(msg.query && msg.query.conditions, msg.query && msg.query.fields, msg.query && msg.query.sort, msg.query && msg.query.cursor, done)
     }
 
 
     private handleDataRequest(req, res): void {
         const fname = 'handleDataRequest'
-        const msg:Request<DataType> = req.body
+        const msg:DBRequest = req.body
         if (msg) {
             // restrict the space of user input actions to those that are public
             var action = this.VALID_ACTIONS[msg.action];
             if (action) {
                 action.call(this, msg, (error, db_response: DataType | DataType[]) => {
-                    let response: Response<DataType>
+                    let response: DBResponse
                     if (!error) {
                         // TODO: must set response.total_count for find()
                         response = {

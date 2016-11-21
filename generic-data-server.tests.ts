@@ -27,7 +27,7 @@ const DB_TYPE = config.db.type
 const POST_FEED_TIMEOUT = 1 * 1000
 
 
-function post(msg: DBRequest<Person>, done: (error: Error, results?: DBResponse<Person>) => void) {
+function post(msg: DBRequest, done: (error: Error, results?: DBResponse) => void) {
     var options: request.OptionsWithUri = {
         uri: URL,
         timeout: POST_FEED_TIMEOUT,
@@ -53,8 +53,8 @@ function post(msg: DBRequest<Person>, done: (error: Error, results?: DBResponse<
 
 
 
-function postAndCallback(msg: DBRequest<Person>, done: ObjectOrArrayCallback<Person>) {
-    post(msg, (error, response: DBResponse<Person>) => {
+function postAndCallback(msg: DBRequest, done: ObjectOrArrayCallback) {
+    post(msg, (error, response: DBResponse) => {
         if (!error) {
             var data = response.data
         } else {
@@ -66,7 +66,7 @@ function postAndCallback(msg: DBRequest<Person>, done: ObjectOrArrayCallback<Per
 }
 
 
-export class ApiAsDatabase implements DocumentDatabase<Person> {
+export class ApiAsDatabase implements DocumentDatabase {
 
     constructor(db_name: string, type: string | {}) {}
 
@@ -91,10 +91,10 @@ export class ApiAsDatabase implements DocumentDatabase<Person> {
     }
 
 
-    // TODO: create(obj: Person, done?: ObjectCallback<Person>): Promise<Person> | void {
-    create(obj: Person, done?: ObjectCallback<Person>): any {
+    // TODO: create(obj: Person, done?: ObjectCallback): Promise<Person> | void {
+    create(obj: Person, done?: ObjectCallback): any {
         if (done) {
-            let msg : DBRequest<Person> = {
+            let msg : DBRequest = {
                 action: 'create',
                 obj
             }
@@ -106,12 +106,12 @@ export class ApiAsDatabase implements DocumentDatabase<Person> {
     private promisified_create = promisify(this.create)
 
 
-    // TODO: read(_id_or_ids: DocumentID | DocumentID[], done?: ObjectOrArrayCallback<Person>): Promise<Person | Person[]> | void {
-    read(_id_or_ids: DocumentID | DocumentID[], done?: ObjectOrArrayCallback<Person>): any {
+    // TODO: read(_id_or_ids: DocumentID | DocumentID[], done?: ObjectOrArrayCallback): Promise<Person | Person[]> | void {
+    read(_id_or_ids: DocumentID | DocumentID[], done?: ObjectOrArrayCallback): any {
         if (done) {
             if (Array.isArray(_id_or_ids)) throw new Error('arrays not supported yet')
             let _id = <DocumentID>_id_or_ids
-            let msg : DBRequest<Person> = {
+            let msg : DBRequest = {
                 action: 'read',
                 query: {ids: [_id]}
             }
@@ -124,10 +124,10 @@ export class ApiAsDatabase implements DocumentDatabase<Person> {
 
 
 
-    // TODO: replace(obj: Person, done?: ObjectCallback<Person>): Promise<Person> | void {
-    replace(obj: Person, done?: ObjectCallback<Person>): any {
+    // TODO: replace(obj: Person, done?: ObjectCallback): Promise<Person> | void {
+    replace(obj: Person, done?: ObjectCallback): any {
         if (done) {
-            let msg : DBRequest<Person> = {
+            let msg : DBRequest = {
                 action: 'replace',
                 obj
             }
@@ -139,11 +139,11 @@ export class ApiAsDatabase implements DocumentDatabase<Person> {
     private promisified_replace = promisify(this.replace)
 
 
-    // TODO: update(conditions : Conditions, updates: UpdateFieldCommand[], done?: ObjectCallback<Person>): any {
-    update(conditions : Conditions, updates: UpdateFieldCommand[], done?: ObjectCallback<Person>): any {
+    // TODO: update(conditions : Conditions, updates: UpdateFieldCommand[], done?: ObjectCallback): any {
+    update(conditions : Conditions, updates: UpdateFieldCommand[], done?: ObjectCallback): any {
         //if (!conditions || !conditions['_id']) throw new Error('update requires conditions._id')
         if (done) {
-            let msg : DBRequest<Person> = {
+            let msg : DBRequest = {
                 action: 'update',
                 query: {conditions},
                 updates
@@ -160,7 +160,7 @@ export class ApiAsDatabase implements DocumentDatabase<Person> {
     // TODO: del(_id: DocumentID, done?: ErrorOnlyCallback): Promise<void> | void {
     del(_id: DocumentID, done?: ErrorOnlyCallback): any {
         if (done) {
-            let msg : DBRequest<Person> = {
+            let msg : DBRequest = {
                 action: 'delete',
                 query: {ids: [_id]}
             }
@@ -172,10 +172,10 @@ export class ApiAsDatabase implements DocumentDatabase<Person> {
     private promisified_del = promisify(this.del)
 
 
-    // TODO: find(conditions : Conditions, fields?: Fields, sort?: Sort, cursor?: Cursor, done?: ArrayCallback<Person>): Promise<Person[]> | void {
-    find(conditions : Conditions, fields?: Fields, sort?: Sort, cursor?: Cursor, done?: ArrayCallback<Person>): any {
+    // TODO: find(conditions : Conditions, fields?: Fields, sort?: Sort, cursor?: Cursor, done?: ArrayCallback): Promise<Person[]> | void {
+    find(conditions : Conditions, fields?: Fields, sort?: Sort, cursor?: Cursor, done?: ArrayCallback): any {
         if (done) {
-            let msg : DBRequest<Person> = {
+            let msg : DBRequest = {
                 action: 'find',
                 query: {conditions, fields, sort, cursor}
             }
@@ -198,7 +198,7 @@ var db: ApiAsDatabase = new ApiAsDatabase('people-service-db', 'Person')
 describe(`generic-data-server using ${DB_TYPE}`, function() {
 
     var mongo_daemon: MongoDaemonRunner
-    var db_server: SingleTypeDatabaseServer<Person>
+    var db_server: SingleTypeDatabaseServer
 
     function getDB() {return db}
 
@@ -211,7 +211,7 @@ describe(`generic-data-server using ${DB_TYPE}`, function() {
         mongo_daemon = new MongoDaemonRunner(mongo_daemon_options)
         mongo_daemon.start((error) => {
             if (!error) {
-                db_server = new SingleTypeDatabaseServer<Person>({
+                db_server = new SingleTypeDatabaseServer({
                     config,
                     log,
                     mongoose_data_definition: PERSON_SCHEMA_DEF})

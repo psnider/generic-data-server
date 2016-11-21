@@ -81,7 +81,7 @@ var ApiAsDatabase = (function () {
             return Promise.resolve();
         }
     };
-    // TODO: create(obj: Person, done?: ObjectCallback<Person>): Promise<Person> | void {
+    // TODO: create(obj: Person, done?: ObjectCallback): Promise<Person> | void {
     ApiAsDatabase.prototype.create = function (obj, done) {
         if (done) {
             var msg = {
@@ -94,7 +94,7 @@ var ApiAsDatabase = (function () {
             return this.promisified_create(obj);
         }
     };
-    // TODO: read(_id_or_ids: DocumentID | DocumentID[], done?: ObjectOrArrayCallback<Person>): Promise<Person | Person[]> | void {
+    // TODO: read(_id_or_ids: DocumentID | DocumentID[], done?: ObjectOrArrayCallback): Promise<Person | Person[]> | void {
     ApiAsDatabase.prototype.read = function (_id_or_ids, done) {
         if (done) {
             if (Array.isArray(_id_or_ids))
@@ -110,7 +110,7 @@ var ApiAsDatabase = (function () {
             return this.promisified_read(_id_or_ids);
         }
     };
-    // TODO: replace(obj: Person, done?: ObjectCallback<Person>): Promise<Person> | void {
+    // TODO: replace(obj: Person, done?: ObjectCallback): Promise<Person> | void {
     ApiAsDatabase.prototype.replace = function (obj, done) {
         if (done) {
             var msg = {
@@ -123,7 +123,7 @@ var ApiAsDatabase = (function () {
             return this.promisified_replace(obj);
         }
     };
-    // TODO: update(conditions : Conditions, updates: UpdateFieldCommand[], done?: ObjectCallback<Person>): any {
+    // TODO: update(conditions : Conditions, updates: UpdateFieldCommand[], done?: ObjectCallback): any {
     ApiAsDatabase.prototype.update = function (conditions, updates, done) {
         //if (!conditions || !conditions['_id']) throw new Error('update requires conditions._id')
         if (done) {
@@ -151,7 +151,7 @@ var ApiAsDatabase = (function () {
             return this.promisified_del(_id);
         }
     };
-    // TODO: find(conditions : Conditions, fields?: Fields, sort?: Sort, cursor?: Cursor, done?: ArrayCallback<Person>): Promise<Person[]> | void {
+    // TODO: find(conditions : Conditions, fields?: Fields, sort?: Sort, cursor?: Cursor, done?: ArrayCallback): Promise<Person[]> | void {
     ApiAsDatabase.prototype.find = function (conditions, fields, sort, cursor, done) {
         if (done) {
             var msg = {

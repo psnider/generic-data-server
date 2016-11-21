@@ -21,7 +21,7 @@ export interface SingleTypeDatabaseServerOptions {
 }
 
 
-export class SingleTypeDatabaseServer<DataType extends DocumentBase> {
+export class SingleTypeDatabaseServer {
     constructor(options: SingleTypeDatabaseServerOptions)
     configureExpress(app: express.Express): void
     connect(done: ErrorOnlyCallback): void
