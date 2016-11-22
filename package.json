@@ -6,7 +6,7 @@
   "keywords": [],
   "private": false,
   "scripts": {
-    "postinstall": "typings install && npm run remove-node-ref-from-express-core-typings",
+    "#postinstall": "typings install && npm run remove-node-ref-from-express-core-typings",
     "check-no-mongod-27016": "! lsof -i :27016",
     "check-no-server-2999": "! lsof -i :2999",
     "remove-node-ref-from-express-core-typings": "[[ ! -e node_modules/express-serve-static-core/express-serve-static-core.d.ts ]] || sed -i -- 's|/// <reference types=\"node\" />|// / <reference types=\"node\" />|' node_modules/express-serve-static-core/express-serve-static-core.d.ts",
