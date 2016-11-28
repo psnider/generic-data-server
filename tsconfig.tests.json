@@ -9,7 +9,7 @@
         "noLib": false,
         "sourceMap": true,
         "outDir": ".",
-        "types": ["body-parser", "express", "http-status-codes", "mongoose", "node", "pino", "request", "serve-static"]
+        "types": ["chai", "mocha", "node"]
     },
     "formatCodeOptions": {
         "indentSize": 4,
@@ -26,7 +26,7 @@
         "placeOpenBraceOnNewLineForControlBlocks": false
     },
     "files": [
-        "generic-data-server.ts",
+        "generic-data-server.tests.ts",
         "person.mongoose-schema.ts"
     ],
     "exclude": []

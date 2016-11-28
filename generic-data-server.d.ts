@@ -1,6 +1,6 @@
 import express = require('express-serve-static-core')
 import pino = require('pino')
-import {DocumentBase, ErrorOnlyCallback} from 'document-database-if'
+import {DocumentBase, ErrorOnlyCallback} from '@sabbatical/document-database'
 
 
 // these seem to be missing from mongoose 
@@ -49,7 +49,7 @@ export interface CommonSettings {
 // These settings will be in config/${NODE_ENV}.json
 export interface NodeEnvironmentSettings {
     // The hostname for this service, e.g. localhost
-    hostname: string
+    hostname?: string
     // The port for the api service, e.g. 3000
     api_port: number
     // The name of the user that runs the deployed service, e.g. 'people'

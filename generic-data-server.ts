@@ -5,11 +5,11 @@ import mongoose = require('mongoose')
 mongoose.Promise = global.Promise;
 import pino = require('pino')
 
-import configure = require('configure-local')
-import {DocumentDatabase, DocumentID, DocumentBase, Request as DBRequest, Response as DBResponse} from 'document-database-if'
-import {SingleTypeDatabaseServerOptions, MicroServiceConfig} from 'generic-data-server'
-import {InMemoryDB} from 'in-memory-db'
-import {MongoDBAdaptor} from 'mongodb-adaptor'
+import configure = require('@sabbatical/configure-local')
+import {DocumentDatabase, DocumentID, DocumentBase, Request as DBRequest, Response as DBResponse} from '@sabbatical/document-database'
+import {SingleTypeDatabaseServerOptions, MicroServiceConfig} from './generic-data-server.d'
+import {InMemoryDB} from '@sabbatical/in-memory-db'
+import {MongoDBAdaptor} from '@sabbatical/mongodb-adaptor'
 
 
 // TODO: FIX: Can't get this type to work in TS 2.0.3

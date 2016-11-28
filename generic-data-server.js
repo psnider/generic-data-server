@@ -1,14 +1,14 @@
 "use strict";
-var body_parser = require('body-parser');
-var HTTP_STATUS = require('http-status-codes');
-var mongoose = require('mongoose');
+const body_parser = require('body-parser');
+const HTTP_STATUS = require('http-status-codes');
+const mongoose = require('mongoose');
 mongoose.Promise = global.Promise;
-var in_memory_db_1 = require('in-memory-db');
-var mongodb_adaptor_1 = require('mongodb-adaptor');
-var SingleTypeDatabaseServer = (function () {
+const in_memory_db_1 = require('@sabbatical/in-memory-db');
+const mongodb_adaptor_1 = require('@sabbatical/mongodb-adaptor');
+class SingleTypeDatabaseServer {
     // mongoose_schema is not required for an InMemoryDB database
-    function SingleTypeDatabaseServer(options) {
-        var fname = 'constructor';
+    constructor(options) {
+        let fname = 'constructor';
         this.VALID_ACTIONS = {
             create: this.create,
             read: this.read,
@@ -19,20 +19,19 @@ var SingleTypeDatabaseServer = (function () {
         };
         this.config = options.config;
         this.log = options.log;
-        this.log.info({ fname: fname, config: this.config });
+        this.log.info({ fname, config: this.config });
         this.selectDatabase(options.mongoose_data_definition);
     }
-    SingleTypeDatabaseServer.prototype.configureExpress = function (app) {
-        var _this = this;
-        var limit = this.config.body_parser_limit;
-        var jsonParser = body_parser.json({ limit: limit });
+    configureExpress(app) {
+        const limit = this.config.body_parser_limit;
+        let jsonParser = body_parser.json({ limit });
         //app.use(body_parser.json({limit}))
         this.log.info({ fname: 'SingleTypeDatabaseServer.configureExpress', post: { api_url_path_prefix: this.config.api_url_path_prefix } });
-        app.post(this.config.api_url_path_prefix, jsonParser, function (req, res) {
-            _this.handleDataRequest(req, res);
+        app.post(this.config.api_url_path_prefix, jsonParser, (req, res) => {
+            this.handleDataRequest(req, res);
         });
-    };
-    SingleTypeDatabaseServer.prototype.selectDatabase = function (mongoose_data_definition) {
+    }
+    selectDatabase(mongoose_data_definition) {
         // TODO: change to take db from fixed path, set by a link, or some other means
         switch (this.config.db.type) {
             case 'InMemoryDB':
@@ -42,10 +41,10 @@ var SingleTypeDatabaseServer = (function () {
                 this.initMongooseModel(mongoose_data_definition);
                 break;
             default:
-                throw new Error("config.db.type must be configured to be either: InMemoryDB or MongoDBAdaptor");
+                throw new Error(`config.db.type must be configured to be either: InMemoryDB or MongoDBAdaptor`);
         }
-    };
-    SingleTypeDatabaseServer.prototype.initMongooseModel = function (mongoose_data_definition) {
+    }
+    initMongooseModel(mongoose_data_definition) {
         this.mongoose = {
             data_definition: mongoose_data_definition,
             schema: undefined,
@@ -62,61 +61,60 @@ var SingleTypeDatabaseServer = (function () {
         //     }
         // });
         this.db = new mongodb_adaptor_1.MongoDBAdaptor(this.config.db.url, this.mongoose.model);
-    };
-    SingleTypeDatabaseServer.prototype.connect = function (done) {
+    }
+    connect(done) {
         return this.db.connect(done);
-    };
-    SingleTypeDatabaseServer.prototype.disconnect = function (done) {
+    }
+    disconnect(done) {
         return this.db.disconnect(done);
-    };
-    SingleTypeDatabaseServer.prototype.create = function (msg, done) {
+    }
+    create(msg, done) {
         return this.db.create(msg.obj, done);
-    };
-    SingleTypeDatabaseServer.prototype.read = function (msg, done) {
-        var _id = msg.query && msg.query.ids && msg.query.ids[0];
+    }
+    read(msg, done) {
+        let _id = msg.query && msg.query.ids && msg.query.ids[0];
         return this.db.read(_id, done);
-    };
-    SingleTypeDatabaseServer.prototype.replace = function (msg, done) {
+    }
+    replace(msg, done) {
         return this.db.replace(msg.obj, done);
-    };
-    SingleTypeDatabaseServer.prototype.update = function (msg, done) {
+    }
+    update(msg, done) {
         return this.db.update(msg.query && msg.query.conditions, msg.updates, done);
-    };
-    SingleTypeDatabaseServer.prototype.del = function (msg, done) {
-        var _id = msg.query && (msg.query.ids && msg.query.ids[0]);
+    }
+    del(msg, done) {
+        let _id = msg.query && (msg.query.ids && msg.query.ids[0]);
         return this.db.del(_id, done);
-    };
-    SingleTypeDatabaseServer.prototype.find = function (msg, done) {
+    }
+    find(msg, done) {
         return this.db.find(msg.query && msg.query.conditions, msg.query && msg.query.fields, msg.query && msg.query.sort, msg.query && msg.query.cursor, done);
-    };
-    SingleTypeDatabaseServer.prototype.handleDataRequest = function (req, res) {
-        var _this = this;
-        var fname = 'handleDataRequest';
-        var msg = req.body;
+    }
+    handleDataRequest(req, res) {
+        const fname = 'handleDataRequest';
+        const msg = req.body;
         if (msg) {
             // restrict the space of user input actions to those that are public
             var action = this.VALID_ACTIONS[msg.action];
             if (action) {
-                action.call(this, msg, function (error, db_response) {
-                    var response;
+                action.call(this, msg, (error, db_response) => {
+                    let response;
                     if (!error) {
                         // TODO: must set response.total_count for find()
                         response = {
                             data: db_response
                         };
-                        _this.log.info({ fname: fname, action: msg.action, http_status: 'ok' });
+                        this.log.info({ fname, action: msg.action, http_status: 'ok' });
                         res.send(response);
                     }
                     else {
-                        var http_status = void 0;
+                        let http_status;
                         // TODO: consider generating a GUID to present to the user for reporting
                         if (error.http_status) {
                             http_status = error.http_status;
-                            _this.log.warn({ fname: fname, action: msg.action, http_status: http_status, error: { message: error.message, stack: error.stack } }, msg.action + " failed");
+                            this.log.warn({ fname, action: msg.action, http_status, error: { message: error.message, stack: error.stack } }, `${msg.action} failed`);
                         }
                         else {
                             http_status = HTTP_STATUS.INTERNAL_SERVER_ERROR;
-                            _this.log.error({ fname: fname, action: msg.action, http_status: http_status, error: { message: error.message, stack: error.stack } }, msg.action + " error didnt include error.http_status");
+                            this.log.error({ fname, action: msg.action, http_status, error: { message: error.message, stack: error.stack } }, `${msg.action} error didnt include error.http_status`);
                         }
                         // TODO: figure out how to not send errors in production, but also pass document-database-tests
                         //if (process.env.NODE_ENV === 'development') {
@@ -128,21 +126,20 @@ var SingleTypeDatabaseServer = (function () {
             }
             else {
                 // TODO: consider generating a GUID to present to the user for reporting
-                this.log.warn({ fname: fname, action: msg.action, msg: 'msg.action is invalid' });
+                this.log.warn({ fname, action: msg.action, msg: 'msg.action is invalid' });
                 res.sendStatus(HTTP_STATUS.BAD_REQUEST);
-                this.log.warn({ fname: fname, action: msg.action });
+                this.log.warn({ fname, action: msg.action });
             }
         }
         else {
             res.sendStatus(400);
         }
-    };
-    // TODO: figure out clean way to get these
-    SingleTypeDatabaseServer.VERSION = {
-        semver: undefined,
-        sha: undefined
-    };
-    return SingleTypeDatabaseServer;
-}());
+    }
+}
+// TODO: figure out clean way to get these
+SingleTypeDatabaseServer.VERSION = {
+    semver: undefined,
+    sha: undefined
+};
 exports.SingleTypeDatabaseServer = SingleTypeDatabaseServer;
 //# sourceMappingURL=generic-data-server.js.map

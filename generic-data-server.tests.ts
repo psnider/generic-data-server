@@ -4,16 +4,16 @@ import CHAI = require('chai')
 const  expect = CHAI.expect
 import express = require('express')
 import pino = require('pino')
-var promisify = require("promisify-node");
+import promisify = require("promisify-node");
 
 process.env.NODE_ENV = 'development-test'
-import configure = require('configure-local')
-import {ArrayCallback, Conditions, Cursor, DocumentID, DocumentDatabase, ErrorOnlyCallback, Fields, ObjectCallback, ObjectOrArrayCallback, Request as DBRequest, Response as DBResponse, Sort, UpdateFieldCommand} from 'document-database-if'
+import configure = require('@sabbatical/configure-local')
+import {ArrayCallback, Conditions, Cursor, DocumentID, DocumentDatabase, ErrorOnlyCallback, Fields, ObjectCallback, ObjectOrArrayCallback, Request as DBRequest, Response as DBResponse, Sort, UpdateFieldCommand} from '@sabbatical/document-database'
 import {Person, Name, ContactMethod, newPerson, newContactMethod} from './example-data-type'
-import {UpdateConfiguration, test_create, test_read, test_replace, test_del, test_update, test_find} from 'document-database-tests'
-import {MicroServiceConfig, SingleTypeDatabaseServer} from 'generic-data-server'
+import {UpdateConfiguration, test_create, test_read, test_replace, test_del, test_update, test_find} from '@sabbatical/document-database/tests'
+import {SingleTypeDatabaseServer, MicroServiceConfig} from '@sabbatical/generic-data-server'
 import {PERSON_SCHEMA_DEF} from './person.mongoose-schema'
-import {MongoDaemonRunner} from 'mongod-runner'
+import {MongoDaemonRunner} from '@sabbatical/mongod-runner'
 
 
 var enable_logging: boolean = (process.env.DISABLE_LOGGING == null) || ((process.env.DISABLE_LOGGING.toLowerCase() !== 'true') && (process.env.DISABLE_LOGGING !== '1'))
@@ -71,8 +71,9 @@ export class ApiAsDatabase implements DocumentDatabase {
     constructor(db_name: string, type: string | {}) {}
 
 
-    // TODO: connect(done?: ErrorOnlyCallback): Promise<void> | void {
-    connect(done?: ErrorOnlyCallback): any {
+    connect(): Promise<void>
+    connect(done: ErrorOnlyCallback): void
+    connect(done?: ErrorOnlyCallback): Promise<void> | void {
         if (done) {
             done()
         } else {
@@ -81,7 +82,8 @@ export class ApiAsDatabase implements DocumentDatabase {
     }
 
 
-    // TODO: disconnect(done?: ErrorOnlyCallback): Promise<void> | void {
+    disconnect(): Promise<void>
+    disconnect(done: ErrorOnlyCallback): void
     disconnect(done?: ErrorOnlyCallback): any {
         if (done) {
             done()
@@ -91,8 +93,9 @@ export class ApiAsDatabase implements DocumentDatabase {
     }
 
 
-    // TODO: create(obj: Person, done?: ObjectCallback): Promise<Person> | void {
-    create(obj: Person, done?: ObjectCallback): any {
+    create(obj: Person): Promise<Person>
+    create(obj: Person, done: ObjectCallback): void
+    create(obj: Person, done?: ObjectCallback): Promise<Person> | void {
         if (done) {
             let msg : DBRequest = {
                 action: 'create',
@@ -106,8 +109,9 @@ export class ApiAsDatabase implements DocumentDatabase {
     private promisified_create = promisify(this.create)
 
 
-    // TODO: read(_id_or_ids: DocumentID | DocumentID[], done?: ObjectOrArrayCallback): Promise<Person | Person[]> | void {
-    read(_id_or_ids: DocumentID | DocumentID[], done?: ObjectOrArrayCallback): any {
+    read(_id_or_ids: DocumentID | DocumentID[]): Promise<Person | Person[]>
+    read(_id_or_ids: DocumentID | DocumentID[], done: ObjectOrArrayCallback): void
+    read(_id_or_ids: DocumentID | DocumentID[], done?: ObjectOrArrayCallback): Promise<Person | Person[]> | void {
         if (done) {
             if (Array.isArray(_id_or_ids)) throw new Error('arrays not supported yet')
             let _id = <DocumentID>_id_or_ids
@@ -123,9 +127,9 @@ export class ApiAsDatabase implements DocumentDatabase {
     private promisified_read = promisify(this.read)
 
 
-
-    // TODO: replace(obj: Person, done?: ObjectCallback): Promise<Person> | void {
-    replace(obj: Person, done?: ObjectCallback): any {
+    replace(obj: Person): Promise<Person>
+    replace(obj: Person, done: ObjectCallback): void
+    replace(obj: Person, done?: ObjectCallback): Promise<Person> | void {
         if (done) {
             let msg : DBRequest = {
                 action: 'replace',
@@ -139,8 +143,9 @@ export class ApiAsDatabase implements DocumentDatabase {
     private promisified_replace = promisify(this.replace)
 
 
-    // TODO: update(conditions : Conditions, updates: UpdateFieldCommand[], done?: ObjectCallback): any {
-    update(conditions : Conditions, updates: UpdateFieldCommand[], done?: ObjectCallback): any {
+    update(conditions : Conditions, updates: UpdateFieldCommand[]): Promise<Person>
+    update(conditions : Conditions, updates: UpdateFieldCommand[], done: ObjectCallback): void
+    update(conditions : Conditions, updates: UpdateFieldCommand[], done?: ObjectCallback): Promise<Person> | void {
         //if (!conditions || !conditions['_id']) throw new Error('update requires conditions._id')
         if (done) {
             let msg : DBRequest = {
@@ -156,9 +161,9 @@ export class ApiAsDatabase implements DocumentDatabase {
     private promisified_update = promisify(this.update)
 
 
-
-    // TODO: del(_id: DocumentID, done?: ErrorOnlyCallback): Promise<void> | void {
-    del(_id: DocumentID, done?: ErrorOnlyCallback): any {
+    del(_id: DocumentID): Promise<void>
+    del(_id: DocumentID, done: ErrorOnlyCallback): void
+    del(_id: DocumentID, done?: ErrorOnlyCallback): Promise<void> | void {
         if (done) {
             let msg : DBRequest = {
                 action: 'delete',
@@ -172,8 +177,9 @@ export class ApiAsDatabase implements DocumentDatabase {
     private promisified_del = promisify(this.del)
 
 
-    // TODO: find(conditions : Conditions, fields?: Fields, sort?: Sort, cursor?: Cursor, done?: ArrayCallback): Promise<Person[]> | void {
-    find(conditions : Conditions, fields?: Fields, sort?: Sort, cursor?: Cursor, done?: ArrayCallback): any {
+    find(conditions : Conditions, fields?: Fields, sort?: Sort, cursor?: Cursor): Promise<Person[]>
+    find(conditions : Conditions, fields: Fields, sort: Sort, cursor: Cursor, done: ArrayCallback): void
+    find(conditions : Conditions, fields?: Fields, sort?: Sort, cursor?: Cursor, done?: ArrayCallback): Promise<Person[]> | void {
         if (done) {
             let msg : DBRequest = {
                 action: 'find',

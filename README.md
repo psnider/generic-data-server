@@ -6,13 +6,12 @@ This database is for test only, as it doesn't persist.
 
 This is used in [people-service](https://github.com/psnider/people-service)
 
-Note that the type declaration file is in the root,
-and it is referenced in the typings field of package.json.
-I haven't figured out how to both reference it this way in the code that's being compiled,
-and in the running code,
-since the running code expects it to be in its install location, under node_modules.
+## problems
+The tests use promisify-node, which has a bug when using es6 classes.
+See: https://github.com/nodegit/promisify-node/issues/26
+and ``npm run postinstall```
 
-To get around this, **bin/install-in-node_modules.sh** creates a local npm compatible module.
+This does not affect the *generic-data-server* package itself.
 
 ## build
 ```
