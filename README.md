@@ -7,9 +7,9 @@ This database is for test only, as it doesn't persist.
 This is used in [people-service](https://github.com/psnider/people-service)
 
 ## problems
-The tests use promisify-node, which has a bug when using es6 classes.
+The tests use promisify-node, which has a bug when using es6 classes.  
 See: https://github.com/nodegit/promisify-node/issues/26
-and ``npm run postinstall```
+and ```npm run postinstall```
 
 This does not affect the *generic-data-server* package itself.
 
@@ -39,10 +39,5 @@ In the *test-only* script, change DISABLE_LOGGING to:
 DISABLE_LOGGING=false
 ```
 
-I haven't figured out how to get source-level debugging to work in MicroSoft Visual Studio Code.
-So until then:
-
-- place breakpoints in the generated javascript files
-- start the debugger, and select Mocha
-- go!
+You may use source-level debugging in MicroSoft Visual Studio Code by selecting launch config *Mocha* from debug mode.
 
