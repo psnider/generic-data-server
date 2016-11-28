@@ -9,7 +9,8 @@ This is used in [people-service](https://github.com/psnider/people-service)
 ## problems
 The tests use promisify-node, which has a bug when using es6 classes.  
 See: https://github.com/nodegit/promisify-node/issues/26
-and ```npm run postinstall```
+
+If you are developing this package, then run ```npm run patch-promisify-node``` after you run npm install.
 
 This does not affect the *generic-data-server* package itself.
 

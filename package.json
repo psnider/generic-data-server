@@ -1,12 +1,12 @@
 {
   "name": "@sabbatical/generic-data-server",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "The portion of a micro-service that manages a database of a single document type.",
   "main": "generic-data-server.js",
   "keywords": [],
   "private": false,
   "scripts": {
-    "postinstall": "cp patch/promisify-node/index.js node_modules/promisify-node && cp patch/promisify-node/args.js node_modules/promisify-node/utils/args.js",
+    "patch-promisify-node": "cp patch/promisify-node/index.js node_modules/promisify-node && cp patch/promisify-node/args.js node_modules/promisify-node/utils/args.js",
     "build": "bin/build-and-install-in-node_modules.sh",
     "check-no-mongod-27016": "! lsof -i :27016",
     "check-no-server-2999": "! lsof -i :2999",
