@@ -1,6 +1,6 @@
 {
   "name": "@sabbatical/generic-data-server",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "The portion of a micro-service that manages a database of a single document type.",
   "main": "generic-data-server.js",
   "keywords": [],
@@ -20,10 +20,10 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@sabbatical/configure-local": "1.0.2",
-    "@sabbatical/document-database": "0.3.2",
+    "@sabbatical/configure-local": "1.0.3",
+    "@sabbatical/document-database": "0.3.3",
     "@sabbatical/in-memory-db": "0.2.3",
-    "@sabbatical/mongodb-adaptor": "0.2.5",
+    "@sabbatical/mongodb-adaptor": "0.2.6",
     "body-parser": "1.15.2",
     "express": "4.14.0",
     "express-serve-static-core": "0.1.1",

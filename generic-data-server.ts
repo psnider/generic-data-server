@@ -1,4 +1,5 @@
 import body_parser = require('body-parser');
+import express = require('express')
 import {Express} from 'express-serve-static-core'
 import HTTP_STATUS = require('http-status-codes');
 import mongoose = require('mongoose')
@@ -6,33 +7,29 @@ mongoose.Promise = global.Promise;
 import pino = require('pino')
 
 import configure = require('@sabbatical/configure-local')
-import {DocumentDatabase, DocumentID, DocumentBase} from '@sabbatical/document-database'
+import {DocumentDatabase, DocumentID, DocumentBase, ErrorOnlyCallback, ObjectCallback, ArrayCallback, ObjectOrArrayCallback} from '@sabbatical/document-database'
 import {Request as DBRequest, Response as DBResponse, SingleTypeDatabaseServerOptions, MicroServiceConfig} from './generic-data-server.d'
 
 import {InMemoryDB} from '@sabbatical/in-memory-db'
 import {MongoDBAdaptor} from '@sabbatical/mongodb-adaptor'
 
 
-// TODO: FIX: Can't get this type to work in TS 2.0.3
-// See: http://stackoverflow.com/questions/40138730
-// type PromiseOrVoid<T> = Promise<T> | void
-type PromiseOrVoid = any
+type DataType = DocumentBase
 
 
 
+export class SingleTypeDatabaseServer {
 
-export class SingleTypeDatabaseServer<DataType extends DocumentBase> {
-
-    // TODO: figure out clean way to get these
-    static VERSION = {
-        semver: undefined,
-        sha: undefined
-    }
+    // // TODO: figure out clean way to get these
+    // static VERSION = {
+    //     semver: undefined,
+    //     sha: undefined
+    // }
 
     // IMPLEMENTATION NOTE: typescript doesn't allow the use of the keyword delete as a function name
     private VALID_ACTIONS: {[action: string]: (msg: DBRequest, done: (error?: Error) => void) => void}
     private config: MicroServiceConfig
-    private log
+    private log: any   // TODO: repair after updating typings for pino
     private db: DocumentDatabase
     private mongoose: {
         data_definition: Object
@@ -105,77 +102,70 @@ export class SingleTypeDatabaseServer<DataType extends DocumentBase> {
     }
 
 
-    connect(done?: (error?: Error) => void): PromiseOrVoid {
+    connect(): Promise<void>
+    connect(done: ErrorOnlyCallback): void
+    connect(done?: ErrorOnlyCallback): Promise<void> | void {
         return this.db.connect(done)
     }
 
 
-    disconnect(done?: (error?: Error) => void): PromiseOrVoid {
+    disconnect(): Promise<void>
+    disconnect(done: ErrorOnlyCallback): void
+    disconnect(done?: ErrorOnlyCallback): Promise<void> | void {
         return this.db.disconnect(done)
     }
 
 
-
-    private create(msg: DBRequest, done?): PromiseOrVoid {
-        return this.db.create(msg.obj, done)
+    private create(msg: DBRequest, done: ObjectOrArrayCallback): void {
+        this.db.create(msg.obj, done)
     }
 
 
-    private read(msg:DBRequest, done?): PromiseOrVoid {
+    private read(msg: DBRequest, done: ObjectOrArrayCallback): void {
         if (msg.query && (msg.query._id || (msg.query._ids && (msg.query._ids.length > 0)))) {
             if (msg.query._id) {
-                return this.db.read(msg.query._id, done)
+                this.db.read(msg.query._id, done)
             } else {
-                return this.db.read(msg.query._ids, done)
+                this.db.read(msg.query._ids, done)
             }
         } else {
-            let error = new Error('_id_or_ids is invalid')
-            if (done) {
-                done(error)
-            } else {
-                return Promise.reject(error)
-            }
+            done(new Error('_id_or_ids is invalid'))
         }
     }
 
 
-    private replace(msg:DBRequest, done?): PromiseOrVoid {
-        return this.db.replace(msg.obj, done)
+    private replace(msg: DBRequest, done: ObjectOrArrayCallback): void {
+        this.db.replace(msg.obj, done)
     }
 
 
-    private update(msg:DBRequest, done?): PromiseOrVoid {
-        return this.db.update(msg.query && msg.query.conditions, msg.updates, done)
+    private update(msg: DBRequest, done: ObjectOrArrayCallback): void {
+        this.db.update(msg.query && msg.query.conditions, msg.updates, done)
     }
 
 
-    private del(msg:DBRequest, done?): PromiseOrVoid {
+    private del(msg: DBRequest, done: ObjectOrArrayCallback): void {
         if (msg.query && msg.query._id) {
-            return this.db.del(msg.query._id, done)
+            this.db.del(msg.query._id, done)
         } else {
-            let error = new Error('_id is invalid')
-            if (done) {
-                done(error)
-            } else {
-                return Promise.reject(error)
-            }
+            done(new Error('_id is invalid'))
         }
     }
 
 
-    private find(msg:DBRequest, done): PromiseOrVoid {
-        return this.db.find(msg.query && msg.query.conditions, msg.query && msg.query.fields, msg.query && msg.query.sort, msg.query && msg.query.cursor, done)
+    private find(msg: DBRequest, done: ObjectOrArrayCallback): void {
+        this.db.find(msg.query && msg.query.conditions, msg.query && msg.query.fields, msg.query && msg.query.sort, msg.query && msg.query.cursor, done)
     }
 
 
-    private handleDataRequest(req, res): void {
+    private handleDataRequest(req: express.Request, res: express.Response): void {
         const fname = 'handleDataRequest'
         const msg:DBRequest = req.body
         if (msg) {
             // restrict the space of user input actions to those that are public
             var action = this.VALID_ACTIONS[msg.action];
             if (action) {
-                action.call(this, msg, (error, db_result: DataType | DataType[]) => {
+                action.call(this, msg, (error: Error, db_result: DataType | DataType[]) => {
                     let response: DBResponse
                     if (!error) {
                         // TODO: must set response.total_count for find()
@@ -185,10 +175,10 @@ export class SingleTypeDatabaseServer<DataType extends DocumentBase> {
                         this.log.info({fname, action: msg.action, http_status: 'ok'})
                         res.send(response)             
                     } else {
-                        let http_status
+                        let http_status: number
                         // TODO: consider generating a GUID to present to the user for reporting
-                        if (error.http_status) {
-                            http_status = error.http_status
+                        if ('http_status' in error) {
+                            http_status = (<any>error).http_status
                             this.log.warn({fname, action: msg.action, http_status, error: {message: error.message, stack: error.stack}}, `${msg.action} failed`)
                         } else {
                             http_status = HTTP_STATUS.INTERNAL_SERVER_ERROR

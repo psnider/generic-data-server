@@ -6,7 +6,7 @@ import {Cursor, DocumentBase, DocumentID, Conditions, Fields, ErrorOnlyCallback,
 // these seem to be missing from mongoose 
 // TODO: add to mongoose.d.ts
 type MongooseObjectId = any
-type MongooseDataFunction = (...any) => any
+type MongooseDataFunction = (...args: any[]) => any
 type MongooseDataDefinitionFunction = MongooseObjectId | MongooseDataFunction
 type MongooseDataDefinitionType = MongooseDataDefinitionFunction | MongooseDataDefinitionFunction[] | MongooseDataDefinition | MongooseDataDefinition[]
 type MongooseDataDefinition = {[fieldname:string]: MongooseDataDefinitionType}
@@ -63,10 +63,10 @@ export interface SingleTypeDatabaseServerOptions {
 export class SingleTypeDatabaseServer {
     constructor(options: SingleTypeDatabaseServerOptions)
     configureExpress(app: express.Express): void
+    connect(): Promise<void>
     connect(done: ErrorOnlyCallback): void
-    connect() : Promise<void>
-    disconnect(done: (error?: Error) => void)
     disconnect() : Promise<void>
+    disconnect(done: ErrorOnlyCallback): void
 }
 
 

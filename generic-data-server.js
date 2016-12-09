@@ -69,49 +69,37 @@ class SingleTypeDatabaseServer {
         return this.db.disconnect(done);
     }
     create(msg, done) {
-        return this.db.create(msg.obj, done);
+        this.db.create(msg.obj, done);
     }
     read(msg, done) {
         if (msg.query && (msg.query._id || (msg.query._ids && (msg.query._ids.length > 0)))) {
             if (msg.query._id) {
-                return this.db.read(msg.query._id, done);
+                this.db.read(msg.query._id, done);
             }
             else {
-                return this.db.read(msg.query._ids, done);
+                this.db.read(msg.query._ids, done);
             }
         }
         else {
-            let error = new Error('_id_or_ids is invalid');
-            if (done) {
-                done(error);
-            }
-            else {
-                return Promise.reject(error);
-            }
+            done(new Error('_id_or_ids is invalid'));
         }
     }
     replace(msg, done) {
-        return this.db.replace(msg.obj, done);
+        this.db.replace(msg.obj, done);
     }
     update(msg, done) {
-        return this.db.update(msg.query && msg.query.conditions, msg.updates, done);
+        this.db.update(msg.query && msg.query.conditions, msg.updates, done);
     }
     del(msg, done) {
         if (msg.query && msg.query._id) {
-            return this.db.del(msg.query._id, done);
+            this.db.del(msg.query._id, done);
         }
         else {
-            let error = new Error('_id is invalid');
-            if (done) {
-                done(error);
-            }
-            else {
-                return Promise.reject(error);
-            }
+            done(new Error('_id is invalid'));
         }
     }
     find(msg, done) {
-        return this.db.find(msg.query && msg.query.conditions, msg.query && msg.query.fields, msg.query && msg.query.sort, msg.query && msg.query.cursor, done);
+        this.db.find(msg.query && msg.query.conditions, msg.query && msg.query.fields, msg.query && msg.query.sort, msg.query && msg.query.cursor, done);
     }
     handleDataRequest(req, res) {
         const fname = 'handleDataRequest';
@@ -133,7 +121,7 @@ class SingleTypeDatabaseServer {
                     else {
                         let http_status;
                         // TODO: consider generating a GUID to present to the user for reporting
-                        if (error.http_status) {
+                        if ('http_status' in error) {
                             http_status = error.http_status;
                             this.log.warn({ fname, action: msg.action, http_status, error: { message: error.message, stack: error.stack } }, `${msg.action} failed`);
                         }
@@ -161,10 +149,5 @@ class SingleTypeDatabaseServer {
         }
     }
 }
-// TODO: figure out clean way to get these
-SingleTypeDatabaseServer.VERSION = {
-    semver: undefined,
-    sha: undefined
-};
 exports.SingleTypeDatabaseServer = SingleTypeDatabaseServer;
 //# sourceMappingURL=generic-data-server.js.map
