@@ -1,6 +1,6 @@
 import express = require('express-serve-static-core')
 import pino = require('pino')
-import {DocumentBase, ErrorOnlyCallback} from '@sabbatical/document-database'
+import {Cursor, DocumentBase, DocumentID, Conditions, Fields, ErrorOnlyCallback, Sort, UpdateFieldCommand} from '@sabbatical/document-database'
 
 
 // these seem to be missing from mongoose 
@@ -12,6 +12,45 @@ type MongooseDataDefinitionType = MongooseDataDefinitionFunction | MongooseDataD
 type MongooseDataDefinition = {[fieldname:string]: MongooseDataDefinitionType}
 
 
+type DocumentType = {}
+
+// TODO: refactor into generic-data-server
+export interface RequestQuery {
+    // id or ids: use these for any queries that do not involve other fields.
+    // Required for read, delete
+    // use id for a single ID, the result will be a single object
+    _id?:           DocumentID
+    // use ids for a set of IDs, the result will be an array of objects
+    _ids?:          DocumentID[]
+    // Used only by update, find
+    conditions?:    Conditions
+    fields?:        Fields
+    sort?:          Sort
+    cursor?:        Cursor
+}
+
+
+// TODO: refactor into generic-data-server
+type Action = 'create' | 'read' | 'update' | 'replace' | 'delete' | 'find'
+
+
+// TODO: refactor into generic-data-server
+export interface Request {
+    action:         Action
+    // obj: used only by create and replace
+    obj?:           DocumentType
+    // query: used for all but create and replace
+    query?:         RequestQuery
+    // updates: used by update only
+    updates?:       UpdateFieldCommand[]
+}
+
+
+export interface Response {
+    error?: any
+    total_count?: number
+    data?: DocumentType | DocumentType[]
+}
 
 
 export interface SingleTypeDatabaseServerOptions {

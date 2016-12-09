@@ -72,8 +72,17 @@ class SingleTypeDatabaseServer {
         return this.db.create(msg.obj, done);
     }
     read(msg, done) {
-        let _id = msg.query && msg.query.ids && msg.query.ids[0];
-        return this.db.read(_id, done);
+        if (msg.query && (msg.query._id || (msg.query._ids && msg.query._ids[0]))) {
+            if (msg.query._id) {
+                return this.db.read(msg.query._id, done);
+            }
+            else {
+                return this.db.read(msg.query._ids, done);
+            }
+        }
+        else {
+            return new Error('id or ids not set');
+        }
     }
     replace(msg, done) {
         return this.db.replace(msg.obj, done);
@@ -82,8 +91,12 @@ class SingleTypeDatabaseServer {
         return this.db.update(msg.query && msg.query.conditions, msg.updates, done);
     }
     del(msg, done) {
-        let _id = msg.query && (msg.query.ids && msg.query.ids[0]);
-        return this.db.del(_id, done);
+        if (msg.query && msg.query._id) {
+            return this.db.del(msg.query._id, done);
+        }
+        else {
+            return new Error('id or ids not set');
+        }
     }
     find(msg, done) {
         return this.db.find(msg.query && msg.query.conditions, msg.query && msg.query.fields, msg.query && msg.query.sort, msg.query && msg.query.cursor, done);
@@ -95,12 +108,12 @@ class SingleTypeDatabaseServer {
             // restrict the space of user input actions to those that are public
             var action = this.VALID_ACTIONS[msg.action];
             if (action) {
-                action.call(this, msg, (error, db_response) => {
+                action.call(this, msg, (error, db_result) => {
                     let response;
                     if (!error) {
                         // TODO: must set response.total_count for find()
                         response = {
-                            data: db_response
+                            data: db_result
                         };
                         this.log.info({ fname, action: msg.action, http_status: 'ok' });
                         res.send(response);

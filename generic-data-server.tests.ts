@@ -8,10 +8,10 @@ import promisify = require("promisify-node");
 
 process.env.NODE_ENV = 'development-test'
 import configure = require('@sabbatical/configure-local')
-import {ArrayCallback, Conditions, Cursor, DocumentID, DocumentDatabase, ErrorOnlyCallback, Fields, ObjectCallback, ObjectOrArrayCallback, Request as DBRequest, Response as DBResponse, Sort, UpdateFieldCommand} from '@sabbatical/document-database'
+import {ArrayCallback, Conditions, Cursor, DocumentID, DocumentDatabase, ErrorOnlyCallback, Fields, ObjectCallback, ObjectOrArrayCallback, Sort, UpdateFieldCommand} from '@sabbatical/document-database'
 import {Person, Name, ContactMethod, newPerson, newContactMethod} from './example-data-type'
 import {UpdateConfiguration, test_create, test_read, test_replace, test_del, test_update, test_find} from '@sabbatical/document-database/tests'
-import {SingleTypeDatabaseServer, MicroServiceConfig} from '@sabbatical/generic-data-server'
+import {Request as DBRequest, Response as DBResponse, SingleTypeDatabaseServer, MicroServiceConfig} from '@sabbatical/generic-data-server'
 import {PERSON_SCHEMA_DEF} from './person.mongoose-schema'
 import {MongoDaemonRunner} from '@sabbatical/mongod-runner'
 
@@ -117,7 +117,7 @@ export class ApiAsDatabase implements DocumentDatabase {
             let _id = <DocumentID>_id_or_ids
             let msg : DBRequest = {
                 action: 'read',
-                query: {ids: [_id]}
+                query: {_id}
             }
             postAndCallback(msg, done)
         } else {
@@ -167,7 +167,7 @@ export class ApiAsDatabase implements DocumentDatabase {
         if (done) {
             let msg : DBRequest = {
                 action: 'delete',
-                query: {ids: [_id]}
+                query: {_ids: [_id]}
             }
             postAndCallback(msg, done)
         } else {

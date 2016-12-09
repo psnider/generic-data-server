@@ -6,8 +6,9 @@ mongoose.Promise = global.Promise;
 import pino = require('pino')
 
 import configure = require('@sabbatical/configure-local')
-import {DocumentDatabase, DocumentID, DocumentBase, Request as DBRequest, Response as DBResponse} from '@sabbatical/document-database'
-import {SingleTypeDatabaseServerOptions, MicroServiceConfig} from './generic-data-server.d'
+import {DocumentDatabase, DocumentID, DocumentBase} from '@sabbatical/document-database'
+import {Request as DBRequest, Response as DBResponse, SingleTypeDatabaseServerOptions, MicroServiceConfig} from './generic-data-server.d'
+
 import {InMemoryDB} from '@sabbatical/in-memory-db'
 import {MongoDBAdaptor} from '@sabbatical/mongodb-adaptor'
 
@@ -69,8 +70,6 @@ export class SingleTypeDatabaseServer<DataType extends DocumentBase> {
     }
 
 
-
-
     private selectDatabase(mongoose_data_definition?: Object) {
         // TODO: change to take db from fixed path, set by a link, or some other means
         switch (this.config.db.type) {
@@ -123,8 +122,15 @@ export class SingleTypeDatabaseServer<DataType extends DocumentBase> {
 
 
     private read(msg:DBRequest, done?): PromiseOrVoid {
-        let _id = msg.query && msg.query.ids && msg.query.ids[0]
-        return this.db.read(_id, done)
+        if (msg.query && (msg.query._id || (msg.query._ids && (msg.query._ids.length > 0)))) {
+            if (msg.query._id) {
+                return this.db.read(msg.query._id, done)
+            } else {
+                return this.db.read(msg.query._ids, done)
+            }
+        } else {
+            return new Error('_id or _ids not set')
+        }
     }
 
 
@@ -139,8 +145,11 @@ export class SingleTypeDatabaseServer<DataType extends DocumentBase> {
 
 
     private del(msg:DBRequest, done?): PromiseOrVoid {
-        let _id = msg.query && (msg.query.ids && msg.query.ids[0])
-        return this.db.del(_id, done)
+        if (msg.query && msg.query._id) {
+            return this.db.del(msg.query._id, done)
+        } else {
+            return new Error('_id not set')
+        }
     }
 
 
@@ -156,12 +165,12 @@ export class SingleTypeDatabaseServer<DataType extends DocumentBase> {
             // restrict the space of user input actions to those that are public
             var action = this.VALID_ACTIONS[msg.action];
             if (action) {
-                action.call(this, msg, (error, db_response: DataType | DataType[]) => {
+                action.call(this, msg, (error, db_result: DataType | DataType[]) => {
                     let response: DBResponse
                     if (!error) {
                         // TODO: must set response.total_count for find()
                         response = {
-                            data: db_response
+                            data: db_result
                         }
                         this.log.info({fname, action: msg.action, http_status: 'ok'})
                         res.send(response)             

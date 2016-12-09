@@ -98,7 +98,7 @@ class ApiAsDatabase {
             let _id = _id_or_ids;
             let msg = {
                 action: 'read',
-                query: { ids: [_id] }
+                query: { _id }
             };
             postAndCallback(msg, done);
         }
@@ -136,7 +136,7 @@ class ApiAsDatabase {
         if (done) {
             let msg = {
                 action: 'delete',
-                query: { ids: [_id] }
+                query: { _ids: [_id] }
             };
             postAndCallback(msg, done);
         }
