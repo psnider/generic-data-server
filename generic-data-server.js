@@ -72,7 +72,7 @@ class SingleTypeDatabaseServer {
         return this.db.create(msg.obj, done);
     }
     read(msg, done) {
-        if (msg.query && (msg.query._id || (msg.query._ids && msg.query._ids[0]))) {
+        if (msg.query && (msg.query._id || (msg.query._ids && (msg.query._ids.length > 0)))) {
             if (msg.query._id) {
                 return this.db.read(msg.query._id, done);
             }
@@ -81,7 +81,13 @@ class SingleTypeDatabaseServer {
             }
         }
         else {
-            return new Error('id or ids not set');
+            let error = new Error('_id_or_ids is invalid');
+            if (done) {
+                done(error);
+            }
+            else {
+                return Promise.reject(error);
+            }
         }
     }
     replace(msg, done) {
@@ -95,7 +101,13 @@ class SingleTypeDatabaseServer {
             return this.db.del(msg.query._id, done);
         }
         else {
-            return new Error('id or ids not set');
+            let error = new Error('_id is invalid');
+            if (done) {
+                done(error);
+            }
+            else {
+                return Promise.reject(error);
+            }
         }
     }
     find(msg, done) {

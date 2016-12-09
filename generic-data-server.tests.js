@@ -93,13 +93,16 @@ class ApiAsDatabase {
     }
     read(_id_or_ids, done) {
         if (done) {
-            if (Array.isArray(_id_or_ids))
-                throw new Error('arrays not supported yet');
-            let _id = _id_or_ids;
             let msg = {
                 action: 'read',
-                query: { _id }
+                query: {}
             };
+            if (Array.isArray(_id_or_ids)) {
+                msg.query._ids = _id_or_ids;
+            }
+            else {
+                msg.query._id = _id_or_ids;
+            }
             postAndCallback(msg, done);
         }
         else {
@@ -136,7 +139,7 @@ class ApiAsDatabase {
         if (done) {
             let msg = {
                 action: 'delete',
-                query: { _ids: [_id] }
+                query: { _id }
             };
             postAndCallback(msg, done);
         }

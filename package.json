@@ -1,6 +1,6 @@
 {
   "name": "@sabbatical/generic-data-server",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "The portion of a micro-service that manages a database of a single document type.",
   "main": "generic-data-server.js",
   "keywords": [],
@@ -12,7 +12,7 @@
     "check-no-server-2999": "! lsof -i :2999",
     "clean": "rm -f *.js *.js.map",
     "test-only": "npm run check-no-mongod-27016 && npm run check-no-server-2999 && NODE_ENV=development-test DISABLE_LOGGING=true mocha -R spec generic-data-server.tests.js",
-    "test": "npm run build && npm run test-only"
+    "test": "npm run clean && npm run build && npm run test-only"
   },
   "author": {
     "name": "Peter Snider",
@@ -21,9 +21,9 @@
   "license": "MIT",
   "dependencies": {
     "@sabbatical/configure-local": "1.0.2",
-    "@sabbatical/document-database": "0.3.1",
+    "@sabbatical/document-database": "0.3.2",
     "@sabbatical/in-memory-db": "0.2.3",
-    "@sabbatical/mongodb-adaptor": "0.2.4",
+    "@sabbatical/mongodb-adaptor": "0.2.5",
     "body-parser": "1.15.2",
     "express": "4.14.0",
     "express-serve-static-core": "0.1.1",

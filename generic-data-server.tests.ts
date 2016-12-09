@@ -113,11 +113,14 @@ export class ApiAsDatabase implements DocumentDatabase {
     read(_id_or_ids: DocumentID | DocumentID[], done: ObjectOrArrayCallback): void
     read(_id_or_ids: DocumentID | DocumentID[], done?: ObjectOrArrayCallback): Promise<Person | Person[]> | void {
         if (done) {
-            if (Array.isArray(_id_or_ids)) throw new Error('arrays not supported yet')
-            let _id = <DocumentID>_id_or_ids
             let msg : DBRequest = {
                 action: 'read',
-                query: {_id}
+                query: {}
+            }
+            if (Array.isArray(_id_or_ids)) {
+                msg.query._ids = _id_or_ids
+            } else {
+                msg.query._id = _id_or_ids                
             }
             postAndCallback(msg, done)
         } else {
@@ -167,7 +170,7 @@ export class ApiAsDatabase implements DocumentDatabase {
         if (done) {
             let msg : DBRequest = {
                 action: 'delete',
-                query: {_ids: [_id]}
+                query: {_id}
             }
             postAndCallback(msg, done)
         } else {

@@ -129,7 +129,12 @@ export class SingleTypeDatabaseServer<DataType extends DocumentBase> {
                 return this.db.read(msg.query._ids, done)
             }
         } else {
-            return new Error('_id or _ids not set')
+            let error = new Error('_id_or_ids is invalid')
+            if (done) {
+                done(error)
+            } else {
+                return Promise.reject(error)
+            }
         }
     }
 
@@ -148,7 +153,12 @@ export class SingleTypeDatabaseServer<DataType extends DocumentBase> {
         if (msg.query && msg.query._id) {
             return this.db.del(msg.query._id, done)
         } else {
-            return new Error('_id not set')
+            let error = new Error('_id is invalid')
+            if (done) {
+                done(error)
+            } else {
+                return Promise.reject(error)
+            }
         }
     }
 
