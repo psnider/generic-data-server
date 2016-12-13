@@ -38,6 +38,6 @@ export var PERSON_SCHEMA_DEF = {
 
 
 
-// TODO: restore indexing based on email, once it's been added to the browser UI
+// TODO: [add indexes to mongodbs](https://github.com/psnider/pets/issues/23)
 //PERSON_SCHEMA.index({ account_email: 1}, { unique: true });
 //PERSON_SCHEMA.set('autoIndex', false);

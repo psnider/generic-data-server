@@ -3,8 +3,7 @@ import pino = require('pino')
 import {Cursor, DocumentBase, DocumentID, Conditions, Fields, ErrorOnlyCallback, Sort, UpdateFieldCommand} from '@sabbatical/document-database'
 
 
-// these seem to be missing from mongoose 
-// TODO: add to mongoose.d.ts
+// TODO: [move mongoose data type declarations to mongoose.d.ts](https://github.com/psnider/generic-data-server/issues/1)
 type MongooseObjectId = any
 type MongooseDataFunction = (...args: any[]) => any
 type MongooseDataDefinitionFunction = MongooseObjectId | MongooseDataFunction
@@ -14,13 +13,13 @@ type MongooseDataDefinition = {[fieldname:string]: MongooseDataDefinitionType}
 
 type DocumentType = {}
 
-// TODO: refactor into generic-data-server
+
 export interface RequestQuery {
     // id or ids: use these for any queries that do not involve other fields.
     // Required for read, delete
-    // use id for a single ID, the result will be a single object
+    // use _id for a single ID, the result will be a single object
     _id?:           DocumentID
-    // use ids for a set of IDs, the result will be an array of objects
+    // use _ids for a set of IDs, the result will be an array of objects
     _ids?:          DocumentID[]
     // Used only by update, find
     conditions?:    Conditions
@@ -30,11 +29,9 @@ export interface RequestQuery {
 }
 
 
-// TODO: refactor into generic-data-server
 type Action = 'create' | 'read' | 'update' | 'replace' | 'delete' | 'find'
 
 
-// TODO: refactor into generic-data-server
 export interface Request {
     action:         Action
     // obj: used only by create and replace
@@ -55,7 +52,7 @@ export interface Response {
 
 export interface SingleTypeDatabaseServerOptions {
     config: MicroServiceConfig
-    log: any // TODO: must be pino(), but can't find type
+    log: any // TODO: [update pino.d.ts](https://github.com/psnider/pets/issues/10)
     mongoose_data_definition?: MongooseDataDefinition
 }
 

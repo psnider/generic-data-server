@@ -20,16 +20,11 @@ type DataType = DocumentBase
 
 export class SingleTypeDatabaseServer {
 
-    // // TODO: figure out clean way to get these
-    // static VERSION = {
-    //     semver: undefined,
-    //     sha: undefined
-    // }
 
     // IMPLEMENTATION NOTE: typescript doesn't allow the use of the keyword delete as a function name
     private VALID_ACTIONS: {[action: string]: (msg: DBRequest, done: (error?: Error) => void) => void}
     private config: MicroServiceConfig
-    private log: any   // TODO: repair after updating typings for pino
+    private log: any // TODO: [update pino.d.ts](https://github.com/psnider/pets/issues/10)
     private db: DocumentDatabase
     private mongoose: {
         data_definition: Object
@@ -68,7 +63,6 @@ export class SingleTypeDatabaseServer {
 
 
     private selectDatabase(mongoose_data_definition?: Object) {
-        // TODO: change to take db from fixed path, set by a link, or some other means
         switch (this.config.db.type) {
             case 'InMemoryDB':
                 this.db = new InMemoryDB(this.config.database_table_name, this.config.typename)
@@ -90,7 +84,7 @@ export class SingleTypeDatabaseServer {
         }
         this.mongoose.schema = new mongoose.Schema(this.mongoose.data_definition)
         this.mongoose.model = mongoose.model(this.config.database_table_name, this.mongoose.schema)
-        // TODO: support adding index specifications
+        // TODO: [add index specification mechanism](https://github.com/psnider/generic-data-server/issues/2)
         // this.mongoose.schema.index({ account_email: 1}, { unique: true });
         // this.mongoose.schema.set('autoIndex', false);
         // this.mongoose.model.ensureIndexes(function (error) {
@@ -168,7 +162,7 @@ export class SingleTypeDatabaseServer {
                 action.call(this, msg, (error: Error, db_result: DataType | DataType[]) => {
                     let response: DBResponse
                     if (!error) {
-                        // TODO: must set response.total_count for find()
+                        // TODO: [ensure that find() returns total_count and respects limit](https://github.com/psnider/generic-data-server/issues/3)
                         response = {
                             data: db_result
                         }
@@ -176,7 +170,6 @@ export class SingleTypeDatabaseServer {
                         res.send(response)             
                     } else {
                         let http_status: number
-                        // TODO: consider generating a GUID to present to the user for reporting
                         if ('http_status' in error) {
                             http_status = (<any>error).http_status
                             this.log.warn({fname, action: msg.action, http_status, error: {message: error.message, stack: error.stack}}, `${msg.action} failed`)
@@ -184,7 +177,7 @@ export class SingleTypeDatabaseServer {
                             http_status = HTTP_STATUS.INTERNAL_SERVER_ERROR
                             this.log.error({fname, action: msg.action, http_status, error: {message: error.message, stack: error.stack}}, `${msg.action} error didnt include error.http_status`) 
                         }
-                        // TODO: figure out how to not send errors in production, but also pass document-database-tests
+                        // TODO: [in production, never send Errors to client apps, only AppError.user_message](psnider/pets/issues/24)
                         //if (process.env.NODE_ENV === 'development') {
                             res.status(http_status)
                             response = {error: {message: error.message, stack: error.stack}}
@@ -195,7 +188,6 @@ export class SingleTypeDatabaseServer {
                     }
                 })
             } else {
-                // TODO: consider generating a GUID to present to the user for reporting
                 this.log.warn({fname, action: msg.action, msg: 'msg.action is invalid'})
                 res.sendStatus(HTTP_STATUS.BAD_REQUEST);
                 this.log.warn({fname, action: msg.action})
