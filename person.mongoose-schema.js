@@ -27,7 +27,7 @@ exports.PERSON_SCHEMA_DEF = {
     last_known_loc: LOCATION_SCHEMA_DEF,
     profile_pic_urls: [String] // URL
 };
-// TODO: restore indexing based on email, once it's been added to the browser UI
+// TODO: [add indexes to mongodbs](https://github.com/psnider/pets/issues/23)
 //PERSON_SCHEMA.index({ account_email: 1}, { unique: true });
 //PERSON_SCHEMA.set('autoIndex', false);
 //# sourceMappingURL=person.mongoose-schema.js.map

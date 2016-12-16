@@ -14,6 +14,7 @@ import {UpdateConfiguration, test_create, test_read, test_replace, test_del, tes
 import {Request as DBRequest, Response as DBResponse, SingleTypeDatabaseServer, MicroServiceConfig} from '@sabbatical/generic-data-server'
 import {PERSON_SCHEMA_DEF} from './person.mongoose-schema'
 import {MongoDaemonRunner} from '@sabbatical/mongod-runner'
+import {SharedConnections} from '@sabbatical/mongoose-connector'
 
 
 var enable_logging: boolean = (process.env.DISABLE_LOGGING == null) || ((process.env.DISABLE_LOGGING.toLowerCase() !== 'true') && (process.env.DISABLE_LOGGING !== '1'))
@@ -220,10 +221,15 @@ describe(`generic-data-server using ${DB_TYPE}`, function() {
         mongo_daemon = new MongoDaemonRunner(mongo_daemon_options)
         mongo_daemon.start((error) => {
             if (!error) {
+                let shared_connections = new SharedConnections(log)
                 db_server = new SingleTypeDatabaseServer({
                     config,
                     log,
-                    mongoose_data_definition: PERSON_SCHEMA_DEF})
+                    mongoose_config: {
+                        mongoose_data_definition: PERSON_SCHEMA_DEF,
+                        shared_connections
+                    }
+                })
                 var app = express()
                 db_server.configureExpress(app)
                 db_server.connect((error) => {

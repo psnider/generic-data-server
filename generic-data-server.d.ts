@@ -1,7 +1,7 @@
 import express = require('express-serve-static-core')
 import pino = require('pino')
 import {Cursor, DocumentBase, DocumentID, Conditions, Fields, ErrorOnlyCallback, Sort, UpdateFieldCommand} from '@sabbatical/document-database'
-
+import {SharedConnections} from '@sabbatical/mongoose-connector'
 
 // TODO: [move mongoose data type declarations to mongoose.d.ts](https://github.com/psnider/generic-data-server/issues/1)
 type MongooseObjectId = any
@@ -53,9 +53,14 @@ export interface Response {
 export interface SingleTypeDatabaseServerOptions {
     config: MicroServiceConfig
     log: any // TODO: [update pino.d.ts](https://github.com/psnider/pets/issues/10)
-    mongoose_data_definition?: MongooseDataDefinition
+    mongoose_config?: MongooseConfig
 }
 
+
+export interface MongooseConfig {
+    mongoose_data_definition: MongooseDataDefinition
+    shared_connections: SharedConnections
+}
 
 export class SingleTypeDatabaseServer {
     constructor(options: SingleTypeDatabaseServerOptions)

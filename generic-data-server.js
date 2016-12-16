@@ -20,7 +20,7 @@ class SingleTypeDatabaseServer {
         this.config = options.config;
         this.log = options.log;
         this.log.info({ fname, config: this.config });
-        this.selectDatabase(options.mongoose_data_definition);
+        this.selectDatabase(options);
     }
     configureExpress(app) {
         const limit = this.config.body_parser_limit;
@@ -31,28 +31,27 @@ class SingleTypeDatabaseServer {
             this.handleDataRequest(req, res);
         });
     }
-    selectDatabase(mongoose_data_definition) {
-        // TODO: change to take db from fixed path, set by a link, or some other means
+    selectDatabase(options) {
         switch (this.config.db.type) {
             case 'InMemoryDB':
                 this.db = new in_memory_db_1.InMemoryDB(this.config.database_table_name, this.config.typename);
                 break;
             case 'MongoDBAdaptor':
-                this.initMongooseModel(mongoose_data_definition);
+                this.initMongooseModel(options);
                 break;
             default:
                 throw new Error(`config.db.type must be configured to be either: InMemoryDB or MongoDBAdaptor`);
         }
     }
-    initMongooseModel(mongoose_data_definition) {
+    initMongooseModel(options) {
         this.mongoose = {
-            data_definition: mongoose_data_definition,
+            mongoose_config: options.mongoose_config,
             schema: undefined,
             model: undefined
         };
-        this.mongoose.schema = new mongoose.Schema(this.mongoose.data_definition);
+        this.mongoose.schema = new mongoose.Schema(this.mongoose.mongoose_config.mongoose_data_definition);
         this.mongoose.model = mongoose.model(this.config.database_table_name, this.mongoose.schema);
-        // TODO: support adding index specifications
+        // TODO: [add index specification mechanism](https://github.com/psnider/generic-data-server/issues/2)
         // this.mongoose.schema.index({ account_email: 1}, { unique: true });
         // this.mongoose.schema.set('autoIndex', false);
         // this.mongoose.model.ensureIndexes(function (error) {
@@ -60,7 +59,8 @@ class SingleTypeDatabaseServer {
         //         throw error;
         //     }
         // });
-        this.db = new mongodb_adaptor_1.MongoDBAdaptor(this.config.db.url, this.mongoose.model);
+        let client_name = `${options.config.service_name}+${options.config.database_table_name}`;
+        this.db = new mongodb_adaptor_1.MongoDBAdaptor(client_name, this.config.db.url, options.mongoose_config.shared_connections, this.mongoose.model);
     }
     connect(done) {
         return this.db.connect(done);
@@ -111,7 +111,7 @@ class SingleTypeDatabaseServer {
                 action.call(this, msg, (error, db_result) => {
                     let response;
                     if (!error) {
-                        // TODO: must set response.total_count for find()
+                        // TODO: [ensure that find() returns total_count and respects limit](https://github.com/psnider/generic-data-server/issues/3)
                         response = {
                             data: db_result
                         };
@@ -120,7 +120,6 @@ class SingleTypeDatabaseServer {
                     }
                     else {
                         let http_status;
-                        // TODO: consider generating a GUID to present to the user for reporting
                         if ('http_status' in error) {
                             http_status = error.http_status;
                             this.log.warn({ fname, action: msg.action, http_status, error: { message: error.message, stack: error.stack } }, `${msg.action} failed`);
@@ -129,7 +128,7 @@ class SingleTypeDatabaseServer {
                             http_status = HTTP_STATUS.INTERNAL_SERVER_ERROR;
                             this.log.error({ fname, action: msg.action, http_status, error: { message: error.message, stack: error.stack } }, `${msg.action} error didnt include error.http_status`);
                         }
-                        // TODO: figure out how to not send errors in production, but also pass document-database-tests
+                        // TODO: [in production, never send Errors to client apps, only AppError.user_message](psnider/pets/issues/24)
                         //if (process.env.NODE_ENV === 'development') {
                         res.status(http_status);
                         response = { error: { message: error.message, stack: error.stack } };
@@ -138,7 +137,6 @@ class SingleTypeDatabaseServer {
                 });
             }
             else {
-                // TODO: consider generating a GUID to present to the user for reporting
                 this.log.warn({ fname, action: msg.action, msg: 'msg.action is invalid' });
                 res.sendStatus(HTTP_STATUS.BAD_REQUEST);
                 this.log.warn({ fname, action: msg.action });

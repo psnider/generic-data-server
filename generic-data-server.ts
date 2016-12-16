@@ -8,10 +8,11 @@ import pino = require('pino')
 
 import configure = require('@sabbatical/configure-local')
 import {DocumentDatabase, DocumentID, DocumentBase, ErrorOnlyCallback, ObjectCallback, ArrayCallback, ObjectOrArrayCallback} from '@sabbatical/document-database'
-import {Request as DBRequest, Response as DBResponse, SingleTypeDatabaseServerOptions, MicroServiceConfig} from './generic-data-server.d'
+import {Request as DBRequest, Response as DBResponse, MongooseConfig, MongooseDataDefinition, SingleTypeDatabaseServerOptions, MicroServiceConfig} from './generic-data-server.d'
 
 import {InMemoryDB} from '@sabbatical/in-memory-db'
 import {MongoDBAdaptor} from '@sabbatical/mongodb-adaptor'
+import {SharedConnections} from '@sabbatical/mongoose-connector'
 
 
 type DataType = DocumentBase
@@ -27,7 +28,7 @@ export class SingleTypeDatabaseServer {
     private log: any // TODO: [update pino.d.ts](https://github.com/psnider/pets/issues/10)
     private db: DocumentDatabase
     private mongoose: {
-        data_definition: Object
+        mongoose_config: MongooseConfig
         schema: mongoose.Schema
         model: mongoose.Model<mongoose.Document>
     }
@@ -47,7 +48,7 @@ export class SingleTypeDatabaseServer {
         this.config = options.config
         this.log = options.log
         this.log.info({fname, config: this.config})
-        this.selectDatabase(options.mongoose_data_definition)
+        this.selectDatabase(options)
     }
 
 
@@ -62,13 +63,13 @@ export class SingleTypeDatabaseServer {
     }
 
 
-    private selectDatabase(mongoose_data_definition?: Object) {
+    private selectDatabase(options: SingleTypeDatabaseServerOptions) {
         switch (this.config.db.type) {
             case 'InMemoryDB':
                 this.db = new InMemoryDB(this.config.database_table_name, this.config.typename)
                 break
             case 'MongoDBAdaptor':
-                this.initMongooseModel(mongoose_data_definition)
+                this.initMongooseModel(options)
                 break
             default:
                 throw new Error(`config.db.type must be configured to be either: InMemoryDB or MongoDBAdaptor`)
@@ -76,13 +77,13 @@ export class SingleTypeDatabaseServer {
     }
 
 
-    private initMongooseModel(mongoose_data_definition?: Object) {
+    private initMongooseModel(options: SingleTypeDatabaseServerOptions) {
         this.mongoose = {
-            data_definition: mongoose_data_definition,
+            mongoose_config: options.mongoose_config,
             schema: undefined,
             model: undefined
         }
-        this.mongoose.schema = new mongoose.Schema(this.mongoose.data_definition)
+        this.mongoose.schema = new mongoose.Schema(this.mongoose.mongoose_config.mongoose_data_definition)
         this.mongoose.model = mongoose.model(this.config.database_table_name, this.mongoose.schema)
         // TODO: [add index specification mechanism](https://github.com/psnider/generic-data-server/issues/2)
         // this.mongoose.schema.index({ account_email: 1}, { unique: true });
@@ -92,7 +93,8 @@ export class SingleTypeDatabaseServer {
         //         throw error;
         //     }
         // });
-        this.db = new MongoDBAdaptor(this.config.db.url, this.mongoose.model)
+        let client_name = `${options.config.service_name}+${options.config.database_table_name}`
+        this.db = new MongoDBAdaptor(client_name, this.config.db.url, options.mongoose_config.shared_connections, this.mongoose.model)
     }
 
 

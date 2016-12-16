@@ -13,6 +13,7 @@ const tests_1 = require('@sabbatical/document-database/tests');
 const generic_data_server_1 = require('@sabbatical/generic-data-server');
 const person_mongoose_schema_1 = require('./person.mongoose-schema');
 const mongod_runner_1 = require('@sabbatical/mongod-runner');
+const mongoose_connector_1 = require('@sabbatical/mongoose-connector');
 var enable_logging = (process.env.DISABLE_LOGGING == null) || ((process.env.DISABLE_LOGGING.toLowerCase() !== 'true') && (process.env.DISABLE_LOGGING !== '1'));
 var log = pino({ name: 'generic-data-server.tests', enabled: enable_logging });
 // test programs should set the configuration of people:api_url and people:db:type
@@ -177,10 +178,15 @@ describe(`generic-data-server using ${DB_TYPE}`, function () {
         mongo_daemon = new mongod_runner_1.MongoDaemonRunner(mongo_daemon_options);
         mongo_daemon.start((error) => {
             if (!error) {
+                let shared_connections = new mongoose_connector_1.SharedConnections(log);
                 db_server = new generic_data_server_1.SingleTypeDatabaseServer({
                     config,
                     log,
-                    mongoose_data_definition: person_mongoose_schema_1.PERSON_SCHEMA_DEF });
+                    mongoose_config: {
+                        mongoose_data_definition: person_mongoose_schema_1.PERSON_SCHEMA_DEF,
+                        shared_connections
+                    }
+                });
                 var app = express();
                 db_server.configureExpress(app);
                 db_server.connect((error) => {
