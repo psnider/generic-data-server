@@ -11,7 +11,7 @@ import {DocumentDatabase, DocumentID, DocumentBase, ErrorOnlyCallback, ObjectCal
 import {Request as DBRequest, Response as DBResponse, MongooseConfig, MongooseDataDefinition, SingleTypeDatabaseServerOptions, MicroServiceConfig} from './generic-data-server.d'
 
 import {InMemoryDB} from '@sabbatical/in-memory-db'
-import {MongoDBAdaptor} from '@sabbatical/mongodb-adaptor'
+import {MongooseDBAdaptor} from '@sabbatical/mongoose-adaptor'
 import {SharedConnections} from '@sabbatical/mongoose-connector'
 
 
@@ -20,7 +20,6 @@ type DataType = DocumentBase
 
 
 export class SingleTypeDatabaseServer {
-
 
     // IMPLEMENTATION NOTE: typescript doesn't allow the use of the keyword delete as a function name
     private VALID_ACTIONS: {[action: string]: (msg: DBRequest, done: (error?: Error) => void) => void}
@@ -66,13 +65,13 @@ export class SingleTypeDatabaseServer {
     private selectDatabase(options: SingleTypeDatabaseServerOptions) {
         switch (this.config.db.type) {
             case 'InMemoryDB':
-                this.db = new InMemoryDB(this.config.database_table_name, this.config.typename)
+                this.db = new InMemoryDB()
                 break
-            case 'MongoDBAdaptor':
+            case 'MongooseDBAdaptor':
                 this.initMongooseModel(options)
                 break
             default:
-                throw new Error(`config.db.type must be configured to be either: InMemoryDB or MongoDBAdaptor`)
+                throw new Error(`config.db.type must be configured to be either: InMemoryDB or MongooseDBAdaptor`)
         }
     }
 
@@ -94,7 +93,7 @@ export class SingleTypeDatabaseServer {
         //     }
         // });
         let client_name = `${options.config.service_name}+${options.config.database_table_name}`
-        this.db = new MongoDBAdaptor(client_name, this.config.db.url, options.mongoose_config.shared_connections, this.mongoose.model)
+        this.db = new MongooseDBAdaptor(client_name, this.config.db.url, options.mongoose_config.shared_connections, this.mongoose.model)
     }
 
 
@@ -131,12 +130,14 @@ export class SingleTypeDatabaseServer {
 
 
     private replace(msg: DBRequest, done: ObjectOrArrayCallback): void {
-        this.db.replace(msg.obj, done)
+        this.db.replace(msg.obj, (error, results) => {
+            done(error, results)
+        })
     }
 
 
     private update(msg: DBRequest, done: ObjectOrArrayCallback): void {
-        this.db.update(msg.query && msg.query.conditions, msg.updates, done)
+        this.db.update(msg.query._id, msg.query._obj_ver, msg.updates, done)
     }
 
 

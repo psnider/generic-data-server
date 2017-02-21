@@ -3,7 +3,7 @@
         "api_port": 3000,
         "api_url": "http://localhost:3000/api/people",
         "db": {
-            "type": "MongoDBAdaptor",
+            "type": "MongooseDBAdaptor",
             "port": 27017,
             "url": "localhost:27017/test"
         }

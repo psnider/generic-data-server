@@ -14,6 +14,8 @@ const generic_data_server_1 = require('@sabbatical/generic-data-server');
 const person_mongoose_schema_1 = require('./person.mongoose-schema');
 const mongod_runner_1 = require('@sabbatical/mongod-runner');
 const mongoose_connector_1 = require('@sabbatical/mongoose-connector');
+const in_memory_db_1 = require('@sabbatical/in-memory-db');
+const mongoose_adaptor_1 = require('@sabbatical/mongoose-adaptor');
 var enable_logging = (process.env.DISABLE_LOGGING == null) || ((process.env.DISABLE_LOGGING.toLowerCase() !== 'true') && (process.env.DISABLE_LOGGING !== '1'));
 var log = pino({ name: 'generic-data-server.tests', enabled: enable_logging });
 // test programs should set the configuration of people:api_url and people:db:type
@@ -56,7 +58,7 @@ function postAndCallback(msg, done) {
     });
 }
 class ApiAsDatabase {
-    constructor(db_name, type) {
+    constructor() {
         this.promisified_create = promisify(this.create);
         this.promisified_read = promisify(this.read);
         this.promisified_replace = promisify(this.replace);
@@ -122,18 +124,18 @@ class ApiAsDatabase {
             return this.promisified_replace(obj);
         }
     }
-    update(conditions, updates, done) {
+    update(_id, _obj_ver, updates, done) {
         //if (!conditions || !conditions['_id']) throw new Error('update requires conditions._id')
         if (done) {
             let msg = {
                 action: 'update',
-                query: { conditions },
+                query: { _id, _obj_ver },
                 updates
             };
             postAndCallback(msg, done);
         }
         else {
-            return this.promisified_update(conditions, updates);
+            return this.promisified_update(_id, _obj_ver, updates);
         }
     }
     del(_id, done) {
@@ -162,12 +164,37 @@ class ApiAsDatabase {
     }
 }
 exports.ApiAsDatabase = ApiAsDatabase;
-var db = new ApiAsDatabase('people-service-db', 'Person');
+var db = new ApiAsDatabase();
+console.log('-----------');
 // NOTE: these tests are identical to the ones in people-db.tests.ts
 // except for checking http status codes
 describe(`generic-data-server using ${DB_TYPE}`, function () {
     var mongo_daemon;
     var db_server;
+    var SUPPORTED_FEATURES = getSupportedFeatures();
+    function getSupportedFeatures() {
+        switch (DB_TYPE) {
+            case 'InMemoryDB':
+                return in_memory_db_1.SUPPORTED_FEATURES;
+            case 'MongooseDBAdaptor':
+                return mongoose_adaptor_1.SUPPORTED_FEATURES;
+            default:
+                throw new Error('unsupported database type');
+        }
+    }
+    let test_fields = {
+        populated_string: 'account_email',
+        unpopulated_string: 'time_zone',
+        string_array: { name: 'profile_pic_urls' },
+        unique_key_fieldname: 'account_email',
+        obj_array: {
+            name: 'contact_methods',
+            key_field: 'address',
+            populated_field: { name: 'method', type: 'string' },
+            unpopulated_field: { name: 'display_name', type: 'string' },
+            createElement: example_data_type_1.newContactMethod
+        }
+    };
     function getDB() { return db; }
     before((done) => {
         var mongo_daemon_options = {
@@ -215,48 +242,22 @@ describe(`generic-data-server using ${DB_TYPE}`, function () {
         });
     });
     describe('create()', function () {
-        tests_1.test_create(getDB, example_data_type_1.newPerson, ['account_email', 'locale']);
+        tests_1.test_create(getDB, example_data_type_1.newPerson, test_fields);
     });
     describe('read()', function () {
-        tests_1.test_read(getDB, example_data_type_1.newPerson, ['account_email', 'locale']);
+        tests_1.test_read(getDB, example_data_type_1.newPerson, test_fields);
     });
     describe('replace()', function () {
-        tests_1.test_replace(getDB, example_data_type_1.newPerson, ['account_email', 'locale']);
+        tests_1.test_replace(getDB, example_data_type_1.newPerson, test_fields, SUPPORTED_FEATURES);
     });
     describe('update()', function () {
-        let config = {
-            test: {
-                populated_string: 'account_email',
-                unpopulated_string: 'time_zone',
-                string_array: { name: 'profile_pic_urls' },
-                obj_array: {
-                    name: 'contact_methods',
-                    key_field: 'address',
-                    populated_field: { name: 'method', type: 'string' },
-                    unpopulated_field: { name: 'display_name', type: 'string' },
-                    createElement: example_data_type_1.newContactMethod
-                }
-            },
-            unsupported: (DB_TYPE !== 'InMemoryDB') ? undefined : {
-                object: {
-                    set: false,
-                    unset: true
-                },
-                array: {
-                    set: true,
-                    unset: true,
-                    insert: true,
-                    remove: true
-                }
-            }
-        };
-        tests_1.test_update(getDB, example_data_type_1.newPerson, config);
+        tests_1.test_update(getDB, example_data_type_1.newPerson, test_fields, SUPPORTED_FEATURES);
     });
     describe('del()', function () {
-        tests_1.test_del(getDB, example_data_type_1.newPerson, ['account_email', 'locale']);
+        tests_1.test_del(getDB, example_data_type_1.newPerson, test_fields);
     });
     describe('find()', function () {
-        tests_1.test_find(getDB, example_data_type_1.newPerson, 'account_email');
+        tests_1.test_find(getDB, example_data_type_1.newPerson, test_fields, SUPPORTED_FEATURES);
     });
 });
 //# sourceMappingURL=generic-data-server.tests.js.map

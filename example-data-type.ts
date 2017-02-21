@@ -22,6 +22,7 @@ export interface ContactMethod {
 export interface Person {
     // NOTE: leading underscore indicates this is special, in this case, not set by user
     _id?:               DatabaseObjectID;
+    _obj_ver?:          number;
     _test_only?:        boolean;
     account_email?:     string;
     account_status?:    string;

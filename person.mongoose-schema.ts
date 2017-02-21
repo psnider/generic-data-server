@@ -24,6 +24,7 @@ var LOCATION_SCHEMA_DEF = {
 
 
 export var PERSON_SCHEMA_DEF = {
+    _obj_ver: Number,
     _test_only: Boolean,
     account_email: String,
     account_status: String,

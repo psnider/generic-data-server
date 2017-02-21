@@ -8,14 +8,16 @@ import promisify = require("promisify-node");
 
 process.env.NODE_ENV = 'development-test'
 import configure = require('@sabbatical/configure-local')
-import {ArrayCallback, Conditions, Cursor, DocumentID, DocumentDatabase, ErrorOnlyCallback, Fields, ObjectCallback, ObjectOrArrayCallback, Sort, UpdateFieldCommand} from '@sabbatical/document-database'
+import {ArrayCallback, Conditions, Cursor, DocumentID, DocumentDatabase, ErrorOnlyCallback, Fields, ObjectCallback, ObjectOrArrayCallback, Sort, SupportedFeatures, UpdateFieldCommand} from '@sabbatical/document-database'
 import {Person, Name, ContactMethod, newPerson, newContactMethod} from './example-data-type'
-import {UpdateConfiguration, test_create, test_read, test_replace, test_del, test_update, test_find} from '@sabbatical/document-database/tests'
+import {FieldsUsedInTests, test_create, test_read, test_replace, test_del, test_update, test_find} from '@sabbatical/document-database/tests'
 import {Request as DBRequest, Response as DBResponse, SingleTypeDatabaseServer, MicroServiceConfig} from '@sabbatical/generic-data-server'
 import {PERSON_SCHEMA_DEF} from './person.mongoose-schema'
 import {MongoDaemonRunner} from '@sabbatical/mongod-runner'
 import {SharedConnections} from '@sabbatical/mongoose-connector'
 
+import {SUPPORTED_FEATURES as IN_MEMORY_DB_SUPPORTED_FEATURES} from '@sabbatical/in-memory-db'
+import {SUPPORTED_FEATURES as MONGOOSE_DB_SUPPORTED_FEATURES} from '@sabbatical/mongoose-adaptor'
 
 var enable_logging: boolean = (process.env.DISABLE_LOGGING == null) || ((process.env.DISABLE_LOGGING.toLowerCase() !== 'true') && (process.env.DISABLE_LOGGING !== '1'))
 var log = pino({name: 'generic-data-server.tests', enabled: enable_logging})
@@ -68,9 +70,6 @@ function postAndCallback(msg: DBRequest, done: ObjectOrArrayCallback) {
 
 
 export class ApiAsDatabase implements DocumentDatabase {
-
-    constructor(db_name: string, type: string | {}) {}
-
 
     connect(): Promise<void>
     connect(done: ErrorOnlyCallback): void
@@ -147,19 +146,19 @@ export class ApiAsDatabase implements DocumentDatabase {
     private promisified_replace = promisify(this.replace)
 
 
-    update(conditions : Conditions, updates: UpdateFieldCommand[]): Promise<Person>
-    update(conditions : Conditions, updates: UpdateFieldCommand[], done: ObjectCallback): void
-    update(conditions : Conditions, updates: UpdateFieldCommand[], done?: ObjectCallback): Promise<Person> | void {
+    update(_id: DocumentID, _obj_ver: number, updates: UpdateFieldCommand[]): Promise<Person>
+    update(_id: DocumentID, _obj_ver: number, updates: UpdateFieldCommand[], done: ObjectCallback): void
+    update(_id: DocumentID, _obj_ver: number, updates: UpdateFieldCommand[], done?: ObjectCallback): Promise<Person> | void {
         //if (!conditions || !conditions['_id']) throw new Error('update requires conditions._id')
         if (done) {
             let msg : DBRequest = {
                 action: 'update',
-                query: {conditions},
+                query: {_id, _obj_ver},
                 updates
             }
             postAndCallback(msg, done)
         } else {
-            return this.promisified_update(conditions, updates)
+            return this.promisified_update(_id, _obj_ver, updates)
         }
     }
     private promisified_update = promisify(this.update)
@@ -199,8 +198,8 @@ export class ApiAsDatabase implements DocumentDatabase {
 
 
 
-var db: ApiAsDatabase = new ApiAsDatabase('people-service-db', 'Person')
-
+var db: ApiAsDatabase = new ApiAsDatabase()
+console.log('-----------')
 
 
 // NOTE: these tests are identical to the ones in people-db.tests.ts
@@ -209,6 +208,35 @@ describe(`generic-data-server using ${DB_TYPE}`, function() {
 
     var mongo_daemon: MongoDaemonRunner
     var db_server: SingleTypeDatabaseServer
+    var SUPPORTED_FEATURES = getSupportedFeatures()
+
+
+    function getSupportedFeatures(): SupportedFeatures {
+        switch (DB_TYPE) {
+        case 'InMemoryDB':
+            return IN_MEMORY_DB_SUPPORTED_FEATURES
+        case 'MongooseDBAdaptor':
+            return MONGOOSE_DB_SUPPORTED_FEATURES
+        default:
+            throw new Error('unsupported database type')
+        }
+    }
+
+
+    let test_fields: FieldsUsedInTests = {
+        populated_string: 'account_email',
+        unpopulated_string: 'time_zone',
+        string_array: {name: 'profile_pic_urls'},
+        unique_key_fieldname: 'account_email',
+        obj_array: {
+            name: 'contact_methods',
+            key_field: 'address',
+            populated_field: {name:'method', type: 'string'},
+            unpopulated_field: {name:'display_name', type: 'string'},
+            createElement: newContactMethod
+        }
+    }
+    
 
     function getDB() {return db}
 
@@ -260,58 +288,32 @@ describe(`generic-data-server using ${DB_TYPE}`, function() {
 
 
     describe('create()', function() {
-         test_create<Person>(getDB, newPerson, ['account_email', 'locale'])        
+         test_create<Person>(getDB, newPerson, test_fields)        
     })
 
 
     describe('read()', function() {
-         test_read<Person>(getDB, newPerson, ['account_email', 'locale'])        
+         test_read<Person>(getDB, newPerson, test_fields)        
     })
 
 
     describe('replace()', function() {
-         test_replace<Person>(getDB, newPerson, ['account_email', 'locale'])        
+         test_replace<Person>(getDB, newPerson, test_fields, SUPPORTED_FEATURES)        
     })
 
 
     describe('update()', function() {
-        let config: UpdateConfiguration = {
-            test: {
-                populated_string: 'account_email',
-                unpopulated_string: 'time_zone',
-                string_array: {name: 'profile_pic_urls'},
-                obj_array: {
-                    name: 'contact_methods',
-                    key_field: 'address',
-                    populated_field: {name:'method', type: 'string'},
-                    unpopulated_field: {name:'display_name', type: 'string'},
-                    createElement: newContactMethod
-                }
-            },
-            unsupported: (DB_TYPE !== 'InMemoryDB') ? undefined : {
-                object: {
-                    set: false, 
-                    unset: true
-                },
-                array: {
-                    set: true,
-                    unset: true,
-                    insert: true,
-                    remove: true
-                }
-            }
-        }         
-        test_update<Person>(getDB, newPerson, config)
+        test_update<Person>(getDB, newPerson, test_fields, SUPPORTED_FEATURES)
     })
 
 
     describe('del()', function() {
-         test_del<Person>(getDB, newPerson, ['account_email', 'locale'])        
+         test_del<Person>(getDB, newPerson, test_fields)        
     })
 
 
     describe('find()', function() {
-         test_find<Person>(getDB, newPerson, 'account_email')
+         test_find<Person>(getDB, newPerson, test_fields, SUPPORTED_FEATURES)
     })
    
 })

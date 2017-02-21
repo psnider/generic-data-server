@@ -8,7 +8,7 @@ type MongooseObjectId = any
 type MongooseDataFunction = (...args: any[]) => any
 type MongooseDataDefinitionFunction = MongooseObjectId | MongooseDataFunction
 type MongooseDataDefinitionType = MongooseDataDefinitionFunction | MongooseDataDefinitionFunction[] | MongooseDataDefinition | MongooseDataDefinition[]
-type MongooseDataDefinition = {[fieldname:string]: MongooseDataDefinitionType}
+export type MongooseDataDefinition = {[fieldname:string]: MongooseDataDefinitionType}
 
 
 type DocumentType = {}
@@ -19,6 +19,8 @@ export interface RequestQuery {
     // Required for read, delete
     // use _id for a single ID, the result will be a single object
     _id?:           DocumentID
+    // The version of an object to update
+    _obj_ver?:       number
     // use _ids for a set of IDs, the result will be an array of objects
     _ids?:          DocumentID[]
     // Used only by update, find
@@ -29,7 +31,7 @@ export interface RequestQuery {
 }
 
 
-type Action = 'create' | 'read' | 'update' | 'replace' | 'delete' | 'find'
+export type Action = 'create' | 'read' | 'update' | 'replace' | 'delete' | 'find'
 
 
 export interface Request {
@@ -104,7 +106,7 @@ export interface NodeEnvironmentSettings {
 
 export interface DatabaseConfig {
     // The database to use for this service instance
-    type: 'MongoDBAdaptor' | 'InMemoryDB'
+    type: 'MongooseDBAdaptor' | 'InMemoryDB'
     // The port for the database.
     // e.g. 27017 for a persistent mongodb
     //      27106 for a temporary mongodb for a test instance

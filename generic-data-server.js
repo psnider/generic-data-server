@@ -4,7 +4,7 @@ const HTTP_STATUS = require('http-status-codes');
 const mongoose = require('mongoose');
 mongoose.Promise = global.Promise;
 const in_memory_db_1 = require('@sabbatical/in-memory-db');
-const mongodb_adaptor_1 = require('@sabbatical/mongodb-adaptor');
+const mongoose_adaptor_1 = require('@sabbatical/mongoose-adaptor');
 class SingleTypeDatabaseServer {
     // mongoose_schema is not required for an InMemoryDB database
     constructor(options) {
@@ -34,13 +34,13 @@ class SingleTypeDatabaseServer {
     selectDatabase(options) {
         switch (this.config.db.type) {
             case 'InMemoryDB':
-                this.db = new in_memory_db_1.InMemoryDB(this.config.database_table_name, this.config.typename);
+                this.db = new in_memory_db_1.InMemoryDB();
                 break;
-            case 'MongoDBAdaptor':
+            case 'MongooseDBAdaptor':
                 this.initMongooseModel(options);
                 break;
             default:
-                throw new Error(`config.db.type must be configured to be either: InMemoryDB or MongoDBAdaptor`);
+                throw new Error(`config.db.type must be configured to be either: InMemoryDB or MongooseDBAdaptor`);
         }
     }
     initMongooseModel(options) {
@@ -60,7 +60,7 @@ class SingleTypeDatabaseServer {
         //     }
         // });
         let client_name = `${options.config.service_name}+${options.config.database_table_name}`;
-        this.db = new mongodb_adaptor_1.MongoDBAdaptor(client_name, this.config.db.url, options.mongoose_config.shared_connections, this.mongoose.model);
+        this.db = new mongoose_adaptor_1.MongooseDBAdaptor(client_name, this.config.db.url, options.mongoose_config.shared_connections, this.mongoose.model);
     }
     connect(done) {
         return this.db.connect(done);
@@ -85,10 +85,12 @@ class SingleTypeDatabaseServer {
         }
     }
     replace(msg, done) {
-        this.db.replace(msg.obj, done);
+        this.db.replace(msg.obj, (error, results) => {
+            done(error, results);
+        });
     }
     update(msg, done) {
-        this.db.update(msg.query && msg.query.conditions, msg.updates, done);
+        this.db.update(msg.query._id, msg.query._obj_ver, msg.updates, done);
     }
     del(msg, done) {
         if (msg.query && msg.query._id) {
