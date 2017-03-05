@@ -1,6 +1,6 @@
 {
   "name": "@sabbatical/generic-data-server",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "The portion of a micro-service that manages a database of a single document type.",
   "main": "generic-data-server.js",
   "keywords": [],
@@ -22,7 +22,7 @@
   "dependencies": {
     "@sabbatical/configure-local": "1.0.3",
     "@sabbatical/document-database": "0.5.0",
-    "@sabbatical/in-memory-db": "0.3.1",
+    "@sabbatical/in-memory-db": "0.3.2",
     "@sabbatical/mongoose-adaptor": "0.5.1",
     "body-parser": "1.15.2",
     "express": "4.14.0",
