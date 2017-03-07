@@ -1,10 +1,11 @@
 "use strict";
-const body_parser = require('body-parser');
-const HTTP_STATUS = require('http-status-codes');
-const mongoose = require('mongoose');
+Object.defineProperty(exports, "__esModule", { value: true });
+const body_parser = require("body-parser");
+const HTTP_STATUS = require("http-status-codes");
+const mongoose = require("mongoose");
 mongoose.Promise = global.Promise;
-const in_memory_db_1 = require('@sabbatical/in-memory-db');
-const mongoose_adaptor_1 = require('@sabbatical/mongoose-adaptor');
+const in_memory_db_1 = require("@sabbatical/in-memory-db");
+const mongoose_adaptor_1 = require("@sabbatical/mongoose-adaptor");
 class SingleTypeDatabaseServer {
     // mongoose_schema is not required for an InMemoryDB database
     constructor(options) {
@@ -135,6 +136,9 @@ class SingleTypeDatabaseServer {
                         res.status(http_status);
                         response = { error: { message: error.message, stack: error.stack } };
                         res.send(response);
+                        // } else {
+                        //     res.sendStatus(http_status)                        
+                        // }
                     }
                 });
             }

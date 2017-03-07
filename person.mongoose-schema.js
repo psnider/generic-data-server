@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var PERSON_NAME_SCHEMA_DEF = {
     family: String,
     given: String,

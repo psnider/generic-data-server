@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 let next_email_id = 1;
 let next_mobile_number = 1234;
 // This is identical to newPerson() in people-db.tests.ts

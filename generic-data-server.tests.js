@@ -1,21 +1,22 @@
 "use strict";
-const HTTP_STATUS = require('http-status-codes');
-const request = require('request');
-const CHAI = require('chai');
+Object.defineProperty(exports, "__esModule", { value: true });
+const HTTP_STATUS = require("http-status-codes");
+const request = require("request");
+const CHAI = require("chai");
 const expect = CHAI.expect;
-const express = require('express');
-const pino = require('pino');
+const express = require("express");
+const pino = require("pino");
 const promisify = require("promisify-node");
 process.env.NODE_ENV = 'development-test';
-const configure = require('@sabbatical/configure-local');
-const example_data_type_1 = require('./example-data-type');
-const tests_1 = require('@sabbatical/document-database/tests');
-const generic_data_server_1 = require('@sabbatical/generic-data-server');
-const person_mongoose_schema_1 = require('./person.mongoose-schema');
-const mongod_runner_1 = require('@sabbatical/mongod-runner');
-const mongoose_connector_1 = require('@sabbatical/mongoose-connector');
-const in_memory_db_1 = require('@sabbatical/in-memory-db');
-const mongoose_adaptor_1 = require('@sabbatical/mongoose-adaptor');
+const configure = require("@sabbatical/configure-local");
+const example_data_type_1 = require("./example-data-type");
+const tests_1 = require("@sabbatical/document-database/tests");
+const generic_data_server_1 = require("@sabbatical/generic-data-server");
+const person_mongoose_schema_1 = require("./person.mongoose-schema");
+const mongod_runner_1 = require("@sabbatical/mongod-runner");
+const mongoose_connector_1 = require("@sabbatical/mongoose-connector");
+const in_memory_db_1 = require("@sabbatical/in-memory-db");
+const mongoose_adaptor_1 = require("@sabbatical/mongoose-adaptor");
 var enable_logging = (process.env.DISABLE_LOGGING == null) || ((process.env.DISABLE_LOGGING.toLowerCase() !== 'true') && (process.env.DISABLE_LOGGING !== '1'));
 var log = pino({ name: 'generic-data-server.tests', enabled: enable_logging });
 // test programs should set the configuration of people:api_url and people:db:type
@@ -53,6 +54,8 @@ function postAndCallback(msg, done) {
             var data = response.data;
         }
         else {
+            // console.log(`postAndCallback error=${error}`)
+            // console.log(`postAndCallback triggering msg=${JSON.stringify(msg)}`)
         }
         done(error, data);
     });
